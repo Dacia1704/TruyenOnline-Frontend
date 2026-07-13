@@ -4,27 +4,22 @@ import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { isAxiosError } from "axios";
 import { login, register } from "@/lib/api/auth";
-import {
-  setAccessToken,
-  setRefreshToken,
-} from "@/lib/api/client";
+import { setAccessToken, setRefreshToken, setUserInfo } from "@/lib/api/client";
 import type { LoginRequest, RegisterRequest } from "@/lib/types/api";
+import { LoginResponse } from "@/lib/types/auth";
 
 function getErrorMessage(error: unknown): string {
   if (isAxiosError(error)) {
-    return (
-      error.response?.data?.message ??
-      error.message ??
-      "Đã xảy ra lỗi, vui lòng thử lại"
-    );
+    return error.response?.data?.message ?? error.message ?? "Đã xảy ra lỗi, vui lòng thử lại";
   }
   if (error instanceof Error) return error.message;
   return "Đã xảy ra lỗi, vui lòng thử lại";
 }
 
-function saveAuthTokens(accessToken: string, refreshToken: string) {
+function saveAuthTokens(accessToken: string, refreshToken: string, userInfo: LoginResponse) {
   setAccessToken(accessToken);
   setRefreshToken(refreshToken);
+  setUserInfo(userInfo);
 }
 
 export function useLogin() {
@@ -34,7 +29,7 @@ export function useLogin() {
     mutationFn: (data: LoginRequest) => login(data),
     onSuccess: (response) => {
       const { accessToken, refreshToken } = response.data;
-      saveAuthTokens(accessToken, refreshToken);
+      saveAuthTokens(accessToken, refreshToken, response.data as LoginResponse);
       router.push("/");
       router.refresh();
     },
@@ -47,14 +42,8 @@ export function useRegister() {
   return useMutation({
     mutationFn: (data: RegisterRequest) => register(data),
     onSuccess: (response) => {
-      const { accessToken, refreshToken } = response.data;
-      if (accessToken && refreshToken) {
-        saveAuthTokens(accessToken, refreshToken);
-        router.push("/");
-        router.refresh();
-      } else {
-        router.push("/login");
-      }
+      console.log(response);
+      router.push("/login");
     },
   });
 }

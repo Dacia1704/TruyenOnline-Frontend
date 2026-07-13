@@ -20,16 +20,15 @@ export function Hero() {
           </span>
         </h1>
         <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          Khám phá hàng ngàn bộ truyện chữ, light novel và manga. Lưu lịch sử
-          đọc, đánh dấu yêu thích và nâng cấp Premium để trải nghiệm không giới
-          hạn.
+          Khám phá hàng ngàn bộ truyện chữ, light novel và manga. Lưu lịch sử đọc, đánh dấu yêu thích và nâng cấp
+          Premium để trải nghiệm không giới hạn.
         </p>
         <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
             href="/register"
             className="w-full sm:w-auto rounded-xl bg-indigo-600 px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition hover:bg-indigo-700 hover:shadow-indigo-500/40"
           >
-            Bắt đầu đọc ngay
+            Đăng kí ngay
           </Link>
           <Link
             href="/login"
