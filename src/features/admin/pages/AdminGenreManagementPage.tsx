@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { AdminLayout } from "../components/AdminLayout";
-import { createGenre, deleteGenre, getGenres, updateGenre, type Genre } from "@/lib/api/admin";
+import { createGenre, deleteGenre, getGenres, updateGenre } from "@/lib/api/admin";
+import type { Genre } from "@/lib/types/stories";
 
 export default function AdminGenreManagementPage() {
   const [genres, setGenres] = useState<Genre[]>([]);
@@ -11,9 +12,9 @@ export default function AdminGenreManagementPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | number | null>(null);
 
-  const [form, setForm] = useState({ name: "", description: "" });
+  const [form, setForm] = useState({ name: "" });
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [editForm, setEditForm] = useState({ name: "", description: "" });
+  const [editForm, setEditForm] = useState({ name: "" });
 
   useEffect(() => {
     loadGenres();
@@ -43,9 +44,9 @@ export default function AdminGenreManagementPage() {
     setActionLoading("create");
     clearFlash();
     try {
-      const created = await createGenre({ name: form.name.trim(), description: form.description.trim() || undefined });
+      const created = await createGenre({ name: form.name.trim() });
       setGenres((prev) => [...prev, created]);
-      setForm({ name: "", description: "" });
+      setForm({ name: "" });
       setSuccess("Thêm thể loại thành công.");
     } catch {
       setError("Không thể thêm thể loại. Vui lòng thử lại.");
@@ -56,13 +57,13 @@ export default function AdminGenreManagementPage() {
 
   const startEdit = (genre: Genre) => {
     setEditingId(genre.id);
-    setEditForm({ name: genre.name, description: genre.description ?? "" });
+    setEditForm({ name: genre.name });
     clearFlash();
   };
 
   const cancelEdit = () => {
     setEditingId(null);
-    setEditForm({ name: "", description: "" });
+    setEditForm({ name: "" });
   };
 
   const submitEdit = async (genre: Genre) => {
@@ -70,7 +71,9 @@ export default function AdminGenreManagementPage() {
     setActionLoading(genre.id);
     clearFlash();
     try {
-      const updated = await updateGenre(genre.id, { name: editForm.name.trim(), description: editForm.description.trim() || undefined });
+      const updated = await updateGenre(genre.id, {
+        name: editForm.name.trim(),
+      });
       setGenres((prev) => prev.map((g) => (g.id === genre.id ? updated : g)));
       cancelEdit();
       setSuccess("Cập nhật thể loại thành công.");
@@ -107,9 +110,7 @@ export default function AdminGenreManagementPage() {
       </div>
 
       {error && (
-        <div className="mt-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
-          {error}
-        </div>
+        <div className="mt-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">{error}</div>
       )}
       {success && (
         <div className="mt-6 rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-700">
@@ -130,15 +131,6 @@ export default function AdminGenreManagementPage() {
               className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
             />
           </div>
-          <div className="flex-1">
-            <label className="block text-xs font-medium text-muted-foreground mb-1.5">Mô tả (tùy chọn)</label>
-            <input
-              value={form.description}
-              onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
-              placeholder="Mô tả ngắn về thể loại"
-              className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
-            />
-          </div>
           <button
             type="submit"
             disabled={actionLoading === "create"}
@@ -156,7 +148,7 @@ export default function AdminGenreManagementPage() {
               <tr>
                 <th className="px-4 py-3 text-left font-medium">ID</th>
                 <th className="px-4 py-3 text-left font-medium">Tên thể loại</th>
-                <th className="px-4 py-3 text-left font-medium">Mô tả</th>
+                <th className="px-4 py-3 text-center font-medium">Số truyện</th>
                 <th className="px-4 py-3 text-right font-medium">Thao tác</th>
               </tr>
             </thead>
@@ -192,17 +184,8 @@ export default function AdminGenreManagementPage() {
                           <span className="font-medium">{genre.name}</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {isEditing ? (
-                          <input
-                            value={editForm.description}
-                            onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
-                            placeholder="Mô tả (tùy chọn)"
-                            className="rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
-                          />
-                        ) : (
-                          <span className="text-sm">{genre.description ?? "—"}</span>
-                        )}
+                      <td className="px-4 py-3 text-center text-muted-foreground">
+                        {genre.storyQuantity ?? 0}
                       </td>
                       <td className="px-4 py-3 text-right">
                         <div className="flex justify-end gap-2">

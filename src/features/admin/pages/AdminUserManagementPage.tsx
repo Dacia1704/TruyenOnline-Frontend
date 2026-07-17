@@ -3,11 +3,11 @@
 import { useEffect, useState } from "react";
 import { AdminLayout } from "../components/AdminLayout";
 import { getUsers, updateUserRoles, banUser, getRoles } from "@/lib/api/admin";
-import type { AdminUser, Role } from "@/lib/types/stories";
+import type { User, Role } from "@/lib/types/stories";
 import { getMyInfo } from "@/lib/api/stories";
 
 export default function AdminUserManagementPage() {
-  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [roles, setRoles] = useState<Role[]>([]);
@@ -17,14 +17,10 @@ export default function AdminUserManagementPage() {
     const load = async () => {
       setLoading(true);
       try {
-        const [usersResult, rolesResult, me] = await Promise.all([
-          getUsers({ size: 20 }),
-          getRoles(),
-          getMyInfo(),
-        ]);
-        setUsers(usersResult.content ?? []);
+        const [usersResult, rolesResult, me] = await Promise.all([getUsers({ size: 20 }), getRoles(), getMyInfo()]);
+        setUsers(usersResult.data ?? []);
         setRoles(rolesResult);
-        const meUser = usersResult.content.find((u) => u.id === me.id);
+        const meUser = usersResult.data.find((u) => u.id === me.id);
         if (meUser?.roles) {
           setSelectedRoles({ [me.id]: meUser.roles.map((r) => r.id) });
         }
@@ -51,15 +47,11 @@ export default function AdminUserManagementPage() {
     <AdminLayout>
       <div>
         <h1 className="text-2xl font-bold">Quản lý người dùng</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Cập nhật role và khóa/mở tài khoản người dùng.
-        </p>
+        <p className="mt-1 text-sm text-muted-foreground">Cập nhật role và khóa/mở tài khoản người dùng.</p>
       </div>
 
       {error && (
-        <div className="mt-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
-          {error}
-        </div>
+        <div className="mt-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">{error}</div>
       )}
 
       <div className="mt-8 rounded-2xl border border-border overflow-hidden">

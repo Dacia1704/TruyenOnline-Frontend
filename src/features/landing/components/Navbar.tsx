@@ -109,6 +109,15 @@ export function Navbar({ uploaderView, onToggleUploader }: NavbarProps) {
                     >
                       Thông tin chung
                     </Link>
+                    {user?.roles?.includes("UPLOADER") && (
+                      <Link
+                        href="/uploader/stories/publish-requests"
+                        onClick={() => setOpen(false)}
+                        className="block px-4 py-2 text-sm hover:bg-muted"
+                      >
+                        Các yêu cầu xuất bản truyện
+                      </Link>
+                    )}
                     <button
                       type="button"
                       onClick={handleLogout}

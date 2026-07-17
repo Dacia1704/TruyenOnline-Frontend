@@ -41,7 +41,7 @@ export default function StoryFormPage({ storyId }: StoryFormPageProps) {
 
         if (storyId) {
           const result = await getStories({ size: 50 });
-          const story = result.data?.data?.find((item) => item.id === storyId);
+          const story = result.data.find((item) => item.id === storyId);
           if (story && story.uploader?.id === myInfo.id) {
             setForm({
               title: story.title,

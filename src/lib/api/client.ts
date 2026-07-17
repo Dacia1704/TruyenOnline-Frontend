@@ -1,6 +1,7 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import type { ApiResponse, RefreshTokenResponse } from "../types/api";
 import { LoginResponse } from "../types/auth";
+import { toast } from "@/lib/toast";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
@@ -55,68 +56,70 @@ apiClient.interceptors.request.use((config) => {
 
 apiClient.interceptors.response.use(
   (response) => response,
-
   async (error: AxiosError) => {
     const originalRequest = error.config as RetryRequest;
 
-    if (!originalRequest || error.response?.status !== 401 || originalRequest._retry) {
+    if (originalRequest && error.response?.status === 401 && !originalRequest._retry) {
+      if (typeof window !== "undefined") {
+        const refreshToken = localStorage.getItem("refreshToken");
+
+        if (!refreshToken) {
+          clearTokens();
+          window.location.href = "/login";
+          return Promise.reject(error);
+        }
+
+        if (isRefreshing) {
+          return new Promise((resolve, reject) => {
+            failedQueue.push({
+              resolve: (token: string) => {
+                originalRequest.headers.Authorization = `Bearer ${token}`;
+                resolve(apiClient(originalRequest));
+              },
+              reject,
+            });
+          });
+        }
+
+        originalRequest._retry = true;
+        isRefreshing = true;
+
+        try {
+          const response = await refreshClient.post<ApiResponse<RefreshTokenResponse>>("/auth/refresh", {
+            refreshToken,
+          });
+
+          const { accessToken, refreshToken: newRefreshToken } = response.data.data;
+
+          setAccessToken(accessToken);
+          setRefreshToken(newRefreshToken);
+          processQueue(null, accessToken);
+
+          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+          return apiClient(originalRequest);
+        } catch (refreshError) {
+          processQueue(refreshError, null);
+
+          clearTokens();
+          window.location.href = "/login";
+
+          return Promise.reject(refreshError);
+        } finally {
+          isRefreshing = false;
+        }
+      }
+
       return Promise.reject(error);
     }
 
-    if (typeof window === "undefined") {
-      return Promise.reject(error);
-    }
+    const message =
+      (error.response?.data as { message?: string } | undefined)?.message ||
+      error.message ||
+      "Đã xảy ra lỗi. Vui lòng thử lại.";
 
-    const refreshToken = localStorage.getItem("refreshToken");
+    toast.error(message);
 
-    if (!refreshToken) {
-      clearTokens();
-      window.location.href = "/login";
-      return Promise.reject(error);
-    }
-
-    if (isRefreshing) {
-      return new Promise((resolve, reject) => {
-        failedQueue.push({
-          resolve: (token: string) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-
-            resolve(apiClient(originalRequest));
-          },
-          reject,
-        });
-      });
-    }
-
-    originalRequest._retry = true;
-    isRefreshing = true;
-
-    try {
-      const response = await refreshClient.post<ApiResponse<RefreshTokenResponse>>("/auth/refresh", {
-        refreshToken,
-      });
-
-      const { accessToken, refreshToken: newRefreshToken } = response.data.data;
-
-      setAccessToken(accessToken);
-      setRefreshToken(newRefreshToken);
-
-      // refresh thành công
-      processQueue(null, accessToken);
-
-      originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-
-      return apiClient(originalRequest);
-    } catch (refreshError) {
-      processQueue(refreshError, null);
-
-      clearTokens();
-      window.location.href = "/login";
-
-      return Promise.reject(refreshError);
-    } finally {
-      isRefreshing = false;
-    }
+    return Promise.reject(error);
   },
 );
 

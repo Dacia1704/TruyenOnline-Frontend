@@ -23,14 +23,19 @@ export function StoryList() {
   const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalElements, setTotalElements] = useState(0);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       setError(null);
       try {
-        const result = await getStories({ isPublished: true, size: 12 });
-        setStories(result.data?.data ?? []);
+        const result = await getStories({ isPublished: true, size: 12, page });
+        setStories(result.data ?? []);
+        setTotalPages(result.totalPages);
+        setTotalElements(result.totalElements);
       } catch {
         setError("Không tải được danh sách truyện.");
       } finally {
@@ -38,7 +43,33 @@ export function StoryList() {
       }
     };
     load();
-  }, []);
+  }, [page]);
+
+  const goToPage = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const getPageNumbers = () => {
+    const pages: (number | "...")[] = [];
+    const total = totalPages;
+    const current = page;
+
+    if (total <= 7) {
+      for (let i = 1; i <= total; i++) pages.push(i);
+    } else {
+      pages.push(1);
+      if (current > 3) pages.push("...");
+      for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
+        pages.push(i);
+      }
+      if (current < total - 2) pages.push("...");
+      pages.push(total);
+    }
+    return pages;
+  };
 
   return (
     <section className="py-16 px-6 bg-muted/50">
@@ -83,7 +114,7 @@ export function StoryList() {
             stories.map((story) => (
               <Link
                 key={story.id}
-                href={`/stories/${story.id}`}
+                href={`/stories/${story.slug}`}
                 className="group rounded-2xl border border-border bg-card overflow-hidden transition hover:border-indigo-500/40 hover:shadow-lg hover:shadow-indigo-500/10"
               >
                 <div className="h-40 bg-muted" />
@@ -110,6 +141,54 @@ export function StoryList() {
               </Link>
             ))}
         </div>
+
+        {!loading && totalPages > 1 && (
+          <div className="mt-10 flex items-center justify-center gap-2">
+            <button
+              onClick={() => goToPage(page - 1)}
+              disabled={page === 1}
+              className="rounded-lg border border-border px-4 py-2 text-sm font-medium transition hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Trước
+            </button>
+
+            <div className="flex items-center gap-1">
+              {getPageNumbers().map((p, i) =>
+                p === "..." ? (
+                  <span key={`ellipsis-${i}`} className="px-2 text-muted-foreground">
+                    ...
+                  </span>
+                ) : (
+                  <button
+                    key={p}
+                    onClick={() => goToPage(p)}
+                    className={`min-w-[40px] rounded-lg px-3 py-2 text-sm font-medium transition ${
+                      p === page
+                        ? "bg-indigo-600 text-white"
+                        : "border border-border hover:bg-background"
+                    }`}
+                  >
+                    {p}
+                  </button>
+                )
+              )}
+            </div>
+
+            <button
+              onClick={() => goToPage(page + 1)}
+              disabled={page === totalPages}
+              className="rounded-lg border border-border px-4 py-2 text-sm font-medium transition hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Sau
+            </button>
+          </div>
+        )}
+
+        {!loading && totalElements > 0 && (
+          <p className="mt-4 text-center text-sm text-muted-foreground">
+            Hiển thị {(page - 1) * 12 + 1} - {Math.min(page * 12, totalElements)} của {totalElements.toLocaleString()} truyện
+          </p>
+        )}
       </div>
     </section>
   );

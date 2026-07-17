@@ -10,9 +10,12 @@ import {
   getMyInfo,
   getStories,
   updateChapter,
+  updateChapterPublishStatus,
 } from "@/lib/api/stories";
 import type { Chapter } from "@/lib/api/stories";
 import type { Story } from "@/lib/types/stories";
+
+type PublishStatus = "PUBLISH" | "DRAFT";
 
 export default function ChapterManagePage() {
   const params = useParams<{ slug?: string }>();
@@ -26,14 +29,16 @@ export default function ChapterManagePage() {
   const [story, setStory] = useState<Story | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [form, setForm] = useState({
-    title: "",
-    chapterNumber: "",
-    isPublished: true,
-  });
+  const [form, setForm] = useState({ title: "", chapterNumber: "" });
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ title: "", chapterNumber: "", isPublished: true });
+
+  const [showPublishModal, setShowPublishModal] = useState(false);
+  const [publishStatus, setPublishStatus] = useState<PublishStatus>("PUBLISH");
+  const [selectedChapterIds, setSelectedChapterIds] = useState<string[]>([]);
+  const [publishingLoading, setPublishingLoading] = useState(false);
+  const [chapterDropdownOpen, setChapterDropdownOpen] = useState(false);
 
   useEffect(() => {
     if (!slug || Array.isArray(slug)) return;
@@ -42,12 +47,12 @@ export default function ChapterManagePage() {
       setLoading(true);
       setError(null);
       try {
-        const [myInfo, storiesData, chaptersResult] = await Promise.all([
+        const [myInfo, storiesResult, chaptersResult] = await Promise.all([
           getMyInfo(),
           getStories({ size: 50 }),
           getChaptersBySlug(slug, { size: 100 }),
         ]);
-        const matched = storiesData.find((item) => item.slug === slug) ?? null;
+        const matched = storiesResult.data.find((item) => item.slug === slug) ?? null;
         if (!matched || matched.uploader?.id !== myInfo.id) {
           setError("Không tìm thấy truyện hoặc bạn không có quyền quản lý chương.");
           setStory(null);
@@ -55,7 +60,7 @@ export default function ChapterManagePage() {
           return;
         }
         setStory(matched);
-        setChapters(chaptersResult.data?.data ?? []);
+        setChapters(chaptersResult.data ?? []);
       } catch {
         setError("Không tải được danh sách chương. Vui lòng thử lại.");
       } finally {
@@ -79,14 +84,12 @@ export default function ChapterManagePage() {
       const saved = await createChapter(story.id, {
         title: form.title.trim() || `Chương ${nextNumber}`,
         chapterNumber: Number(form.chapterNumber) || nextNumber,
-        isPublished: form.isPublished,
       });
       setChapters((prev) => [...prev, saved].sort((a, b) => a.chapterNumber - b.chapterNumber));
 
       setForm({
         title: "",
         chapterNumber: "",
-        isPublished: true,
       });
       setCreatingId(null);
     } catch {
@@ -184,6 +187,18 @@ export default function ChapterManagePage() {
               Tạo truyện mới
             </button>
           )}
+          <button
+            type="button"
+            onClick={() => {
+              setShowPublishModal(true);
+              setPublishStatus("PUBLISH");
+              setSelectedChapterIds([]);
+              setChapterDropdownOpen(false);
+            }}
+            className="rounded-lg border border-border px-4 py-2 text-sm font-medium transition hover:bg-muted"
+          >
+            Xuất bản chương
+          </button>
         </div>
       </div>
 
@@ -198,7 +213,7 @@ export default function ChapterManagePage() {
             Tạo chương mới. Sau khi tạo, bấm &quot;Nội dung&quot; để thêm nội dung văn bản hoặc ảnh trang.
           </p>
           <form className="mt-5 space-y-5" onSubmit={handleCreateChapter}>
-            <div className="grid gap-4 sm:grid-cols-[1fr_120px_auto]">
+            <div className="grid gap-4 sm:grid-cols-[1fr_120px]">
               <input
                 value={form.title}
                 onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))}
@@ -212,14 +227,6 @@ export default function ChapterManagePage() {
                 inputMode="numeric"
                 className="rounded-lg border border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
               />
-              <label className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={form.isPublished}
-                  onChange={(event) => setForm((prev) => ({ ...prev, isPublished: event.target.checked }))}
-                />
-                Xuất bản
-              </label>
             </div>
 
             <div className="flex items-center gap-3">
@@ -233,6 +240,110 @@ export default function ChapterManagePage() {
             </div>
           </form>
         </section>
+      )}
+
+      {showPublishModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-background p-6 shadow-xl">
+            <h3 className="text-lg font-semibold">Cập nhật trạng thái xuất bản</h3>
+            <p className="mt-2 text-sm text-muted-foreground">Chọn chương và trạng thái xuất bản mong muốn.</p>
+            <div className="mt-5 space-y-4">
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setChapterDropdownOpen((prev) => !prev)}
+                  className="w-full rounded-lg border border-border bg-background px-3 py-2 text-left text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+                >
+                  {selectedChapterIds.length === 0
+                    ? "Chọn chương..."
+                    : `Đã chọn ${selectedChapterIds.length} chương`}
+                </button>
+                {chapterDropdownOpen && (
+                  <div className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-border bg-background shadow">
+                    {chapters.length === 0 && (
+                      <p className="px-3 py-2 text-xs text-muted-foreground">Chưa có chương nào.</p>
+                    )}
+                    {chapters.map((chapter) => (
+                      <label
+                        key={chapter.id}
+                        className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-muted"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedChapterIds.includes(chapter.id)}
+                          onChange={(event) =>
+                            setSelectedChapterIds((prev) =>
+                              event.target.checked ? [...prev, chapter.id] : prev.filter((item) => item !== chapter.id),
+                            )
+                          }
+                          className="h-4 w-4 rounded border-border"
+                        />
+                        <span className="truncate">
+                          Chương {chapter.chapterNumber}: {chapter.title}
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <select
+                value={publishStatus}
+                onChange={(event) => setPublishStatus(event.target.value as PublishStatus)}
+                className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+              >
+                <option value="PUBLISH">Xuất bản</option>
+                <option value="DRAFT">Bản nháp</option>
+              </select>
+            </div>
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPublishModal(false);
+                  setPublishStatus("PUBLISH");
+                  setSelectedChapterIds([]);
+                  setChapterDropdownOpen(false);
+                }}
+                disabled={publishingLoading}
+                className="rounded-lg border border-border px-4 py-2 text-sm font-medium transition hover:bg-muted disabled:opacity-60"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (selectedChapterIds.length === 0) {
+                    setError("Vui lòng chọn ít nhất 1 chương.");
+                    return;
+                  }
+                  try {
+                    setPublishingLoading(true);
+                    setError(null);
+                    const publishStatusValue = publishStatus === "PUBLISH";
+                    await updateChapterPublishStatus(selectedChapterIds, publishStatusValue);
+                    setChapters((prev) =>
+                      prev.map((item) =>
+                        selectedChapterIds.includes(item.id) ? { ...item, isPublished: publishStatusValue } : item,
+                      ),
+                    );
+                    setShowPublishModal(false);
+                    setPublishStatus("PUBLISH");
+                    setSelectedChapterIds([]);
+                    setChapterDropdownOpen(false);
+                  } catch {
+                    setError("Không thể cập nhật trạng thái xuất bản. Vui lòng thử lại.");
+                  } finally {
+                    setPublishingLoading(false);
+                  }
+                }}
+                disabled={publishingLoading}
+                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:opacity-60"
+              >
+                {publishingLoading ? "Đang xử lý..." : "Cập nhật"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <div className="mt-8 grid gap-4">
@@ -251,15 +362,28 @@ export default function ChapterManagePage() {
           return (
             <div
               key={chapter.id}
-              className="rounded-2xl border border-border bg-card p-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+              className={`rounded-2xl border bg-card p-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between ${
+                chapter.isPublished ? "border-emerald-200 bg-emerald-50/40" : "border-border"
+              }`}
             >
-              <div className="min-w-0">
-                <p className="font-semibold">
-                  Chương {chapter.chapterNumber}: {chapter.title}
-                </p>
-                <p className="text-sm text-muted-foreground">
-                  Trạng thái: {chapter.isPublished ? "Đã xuất bản" : "Bản nháp"} · Số trang: {chapter.pageCount}
-                </p>
+              <div className="flex items-center gap-3">
+                <span
+                  className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
+                    chapter.isPublished
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-gray-100 text-gray-600"
+                  }`}
+                >
+                  {chapter.isPublished ? "Đã xuất bản" : "Bản nháp"}
+                </span>
+                <div className="min-w-0">
+                  <p className="font-semibold">
+                    Chương {chapter.chapterNumber}: {chapter.title}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Số trang: {chapter.pageCount}
+                  </p>
+                </div>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {isEditing ? (
@@ -303,7 +427,7 @@ export default function ChapterManagePage() {
                   <>
                     <button
                       type="button"
-                      onClick={() => router.push(`/uploader/stories/${story.id}/chapters/${chapter.id}/content`)}
+                      onClick={() => router.push(`/uploader/stories/${slug}/chapters/${chapter.id}/content`)}
                       className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700"
                     >
                       Nội dung
