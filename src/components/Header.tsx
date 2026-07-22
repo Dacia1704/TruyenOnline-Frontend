@@ -1,21 +1,20 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import Link from "next/link";
-import { clearTokens, getUserInfo } from "@/lib/api/client";
+import { usePathname, useRouter } from "next/navigation";
+import { getUserInfo, clearTokens } from "@/lib/api/client";
 import { LoginResponse } from "@/lib/types/auth";
 
-interface NavbarProps {
-  uploaderView: "reader" | "uploader";
-  onToggleUploader: () => void;
-}
-
-export function Navbar({ uploaderView, onToggleUploader }: NavbarProps) {
-  const [user, setUser] = useState<LoginResponse | null>(null);
-  const [open, setOpen] = useState(false);
+export function Header() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const pathname = usePathname();
+  const router = useRouter();
+  const [user, setUser] = useState<LoginResponse | null>(null);
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -23,6 +22,17 @@ export function Navbar({ uploaderView, onToggleUploader }: NavbarProps) {
     if (info) {
       setUser(info as LoginResponse);
     }
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const initials = useMemo(() => {
@@ -38,8 +48,15 @@ export function Navbar({ uploaderView, onToggleUploader }: NavbarProps) {
     clearTokens();
     setUser(null);
     setOpen(false);
-    window.location.href = "/login";
+    router.push("/");
   };
+
+  const isAdmin = pathname?.startsWith("/admin");
+  const isUploader = pathname?.startsWith("/uploader");
+
+  if (isAdmin || isUploader) {
+    return null;
+  }
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 h-16 border-b bg-background/80 backdrop-blur-xl dark:border-white/10 dark:bg-gradient-to-r dark:from-slate-900 dark:via-indigo-950 dark:to-slate-900">
@@ -62,37 +79,6 @@ export function Navbar({ uploaderView, onToggleUploader }: NavbarProps) {
             Kho truyện
           </Link>
 
-          {user?.roles?.includes("UPLOADER") && (
-            <div className="hidden sm:flex items-center gap-1 rounded-full bg-muted dark:bg-white/10 px-1.5 py-1.5 backdrop-blur-sm">
-              <button
-                type="button"
-                onClick={() => {
-                  if (uploaderView !== "reader") onToggleUploader();
-                }}
-                className={`rounded-full px-4 py-1.5 text-xs font-medium transition ${
-                  uploaderView === "reader"
-                    ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md"
-                    : "text-muted-foreground hover:text-foreground dark:text-white/70 dark:hover:text-white"
-                }`}
-              >
-                Đọc truyện
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (uploaderView !== "uploader") onToggleUploader();
-                }}
-                className={`rounded-full px-4 py-1.5 text-xs font-medium transition ${
-                  uploaderView === "uploader"
-                    ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-md"
-                    : "text-muted-foreground hover:text-foreground dark:text-white/70 dark:hover:text-white"
-                }`}
-              >
-                Uploader
-              </button>
-            </div>
-          )}
-
           {/* Theme Toggle */}
           <button
             type="button"
@@ -114,11 +100,11 @@ export function Navbar({ uploaderView, onToggleUploader }: NavbarProps) {
           </button>
 
           {user ? (
-            <div className="relative">
+            <div className="relative" ref={dropdownRef}>
               <button
                 type="button"
                 onClick={() => setOpen((prev) => !prev)}
-                className="flex items-center gap-2 rounded-full bg-muted px-1.5 py-1.5 pl-1.5 transition hover:bg-muted/80 dark:bg-white/10 dark:hover:bg-white/20 backdrop-blur-sm"
+                className="flex items-center gap-2 rounded-full bg-muted dark:bg-white/10 px-1.5 py-1.5 pl-1.5 transition hover:bg-muted/80 dark:hover:bg-white/20 backdrop-blur-sm"
               >
                 <span className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-xs font-bold text-white shadow-lg shadow-indigo-500/30">
                   {initials}
@@ -147,6 +133,18 @@ export function Navbar({ uploaderView, onToggleUploader }: NavbarProps) {
                         Trang quản trị
                       </Link>
                     )}
+                    {user.roles?.includes("UPLOADER") && (
+                      <Link
+                        href="/uploader/stories"
+                        onClick={() => setOpen(false)}
+                        className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted dark:text-white/80 dark:hover:text-white dark:hover:bg-white/10 transition"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                        Quản lý truyện
+                      </Link>
+                    )}
                     <Link
                       href="/profile"
                       onClick={() => setOpen(false)}
@@ -157,18 +155,6 @@ export function Navbar({ uploaderView, onToggleUploader }: NavbarProps) {
                       </svg>
                       Thông tin chung
                     </Link>
-                    {user?.roles?.includes("UPLOADER") && (
-                      <Link
-                        href="/uploader/stories/publish-requests"
-                        onClick={() => setOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-muted dark:text-white/80 dark:hover:text-white dark:hover:bg-white/10 transition"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        Các yêu cầu xuất bản
-                      </Link>
-                    )}
                     <div className="my-2 border-t border-border dark:border-white/10" />
                     <button
                       type="button"

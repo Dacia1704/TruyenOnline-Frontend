@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { SessionProvider } from "next-auth/react";
 import { useState } from "react";
+import ThemeProvider from "./ThemeProvider";
 
 export default function AppProvider({ children }: { children: React.ReactNode }) {
   // Đảm bảo mỗi request có 1 QueryClient riêng biệt, không bị leak data giữa các user
@@ -21,10 +22,12 @@ export default function AppProvider({ children }: { children: React.ReactNode })
 
   return (
     <SessionProvider>
-      <QueryClientProvider client={queryClient}>
-        {children}
-        <ReactQueryDevtools initialIsOpen={false} />
-      </QueryClientProvider>
+      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+        <QueryClientProvider client={queryClient}>
+          {children}
+          <ReactQueryDevtools initialIsOpen={false} />
+        </QueryClientProvider>
+      </ThemeProvider>
     </SessionProvider>
   );
 }

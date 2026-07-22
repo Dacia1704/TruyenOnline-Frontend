@@ -1,15 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { PageLayout } from "@/components/PageLayout";
+import { CommentsList } from "@/components/CommentsList";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { getChapter } from "@/lib/api/stories";
 import { getChaptersBySlug } from "@/lib/api/stories";
-import type { Chapter, ChapterPage } from "@/lib/types/stories";
+import { createOrUpdateReadingHistory } from "@/lib/api/stories";
+import { getComments, createComment } from "@/lib/api/stories";
+import type { Chapter, ChapterPage, Comment } from "@/lib/types/stories";
 
 export default function ChapterReadPage() {
   const params = useParams();
-  const router = useRouter();
   const slug = params.slug as string;
   const chapterId = params.chapterId as string;
 
@@ -18,14 +21,36 @@ export default function ChapterReadPage() {
   const [allChapters, setAllChapters] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(0);
+
+  const [comments, setComments] = useState<Comment[]>([]);
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [newComment, setNewComment] = useState("");
+  const [submittingComment, setSubmittingComment] = useState(false);
+
+  const hasTrackedStoryRef = useRef(false);
+  const hasTrackedChapterRef = useRef(false);
 
   const isMangaMode = pages.length > 0;
+
+  const loadComments = useCallback(async () => {
+    if (!chapterId) return;
+    setCommentsLoading(true);
+    try {
+      const result = await getComments({ chapterId, size: 50 });
+      setComments(result.data ?? []);
+    } catch {
+      // Silently fail for comments
+    } finally {
+      setCommentsLoading(false);
+    }
+  }, [chapterId]);
 
   useEffect(() => {
     const load = async () => {
       setLoading(true);
       setError(null);
+      hasTrackedStoryRef.current = false;
+      hasTrackedChapterRef.current = false;
       try {
         const [chapterData, chaptersData] = await Promise.all([
           getChapter(chapterId),
@@ -38,6 +63,12 @@ export default function ChapterReadPage() {
             (a, b) => Number(a.chapterNumber) - Number(b.chapterNumber)
           )
         );
+
+        // Track STORY view immediately when user starts reading
+        if (chapterData.story?.id) {
+          createOrUpdateReadingHistory(chapterId, chapterData.story.id, "STORY");
+          hasTrackedStoryRef.current = true;
+        }
       } catch {
         setError("Không tải được nội dung chương.");
       } finally {
@@ -47,34 +78,75 @@ export default function ChapterReadPage() {
     load();
   }, [slug, chapterId]);
 
+  // Track CHAPTER view after 3 seconds
+  useEffect(() => {
+    if (!chapter?.story?.id || hasTrackedChapterRef.current) return;
+
+    const timer = setTimeout(() => {
+      if (!hasTrackedChapterRef.current && chapter?.story?.id) {
+        createOrUpdateReadingHistory(chapterId, chapter.story.id, "CHAPTER");
+        hasTrackedChapterRef.current = true;
+      }
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [chapter, chapterId]);
+
+  useEffect(() => {
+    loadComments();
+  }, [loadComments]);
+
+  const handleSubmitComment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+
+    setSubmittingComment(true);
+    try {
+      await createComment({
+        chapterId,
+        content: newComment.trim(),
+      });
+      setNewComment("");
+      loadComments();
+    } catch {
+      alert("Không thể gửi bình luận. Vui lòng đăng nhập.");
+    } finally {
+      setSubmittingComment(false);
+    }
+  };
+
   const currentChapterIndex = allChapters.findIndex((c) => c.id === chapterId);
   const prevChapter = currentChapterIndex > 0 ? allChapters[currentChapterIndex - 1] : null;
   const nextChapter = currentChapterIndex < allChapters.length - 1 ? allChapters[currentChapterIndex + 1] : null;
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-pulse text-muted-foreground">Đang tải...</div>
-      </div>
+      <PageLayout>
+        <div className="flex items-center justify-center min-h-[50vh]">
+          <div className="animate-pulse text-muted-foreground">Đang tải...</div>
+        </div>
+      </PageLayout>
     );
   }
 
   if (error || !chapter) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center">
-        <p className="text-muted-foreground">{error ?? "Không tìm thấy chương."}</p>
-        <Link href={`/stories/${slug}`} className="mt-4 text-indigo-600 hover:underline">
-          Quay lại truyện
-        </Link>
-      </div>
+      <PageLayout>
+        <div className="flex flex-col items-center justify-center min-h-[50vh]">
+          <p className="text-muted-foreground">{error ?? "Không tìm thấy chương."}</p>
+          <Link href={`/stories/${slug}`} className="mt-4 text-indigo-400 hover:underline">
+            Quay lại truyện
+          </Link>
+        </div>
+      </PageLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 border-b border-border bg-card">
+    <PageLayout>
+      <header className="sticky top-16 z-40 border-b border-border bg-background/80 backdrop-blur-xl">
         <div className="mx-auto max-w-4xl flex items-center justify-between px-6 py-3">
-          <Link href={`/stories/${slug}`} className="flex items-center gap-2 text-sm hover:text-indigo-600 transition">
+          <Link href={`/stories/${slug}`} className="flex items-center gap-2 text-sm hover:text-indigo-400 transition text-foreground">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
@@ -82,7 +154,7 @@ export default function ChapterReadPage() {
           </Link>
 
           <div className="flex items-center gap-2">
-            <span className="text-sm font-medium">
+            <span className="text-sm font-medium text-foreground">
               Chương {chapter.chapterNumber}
               {chapter.title && ` - ${chapter.title}`}
             </span>
@@ -92,7 +164,7 @@ export default function ChapterReadPage() {
             {prevChapter && (
               <Link
                 href={`/stories/${slug}/chapters/${prevChapter.id}`}
-                className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition hover:bg-muted"
+                className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition hover:bg-muted text-foreground"
               >
                 ← Chap trước
               </Link>
@@ -100,7 +172,7 @@ export default function ChapterReadPage() {
             {nextChapter && (
               <Link
                 href={`/stories/${slug}/chapters/${nextChapter.id}`}
-                className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition hover:bg-muted"
+                className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition hover:bg-muted text-foreground"
               >
                 Chap kế →
               </Link>
@@ -109,7 +181,7 @@ export default function ChapterReadPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl px-4 py-6">
+      <div className="mx-auto max-w-4xl px-4 py-6">
         {isMangaMode ? (
           <div className="flex flex-col items-center">
             {pages
@@ -126,7 +198,7 @@ export default function ChapterReadPage() {
           </div>
         ) : (
           <article className="prose prose-sm max-w-none">
-            <div className="whitespace-pre-wrap text-sm leading-relaxed">
+            <div className="whitespace-pre-wrap text-sm leading-relaxed text-foreground">
               {chapter.content ?? "Chưa có nội dung."}
             </div>
           </article>
@@ -137,7 +209,7 @@ export default function ChapterReadPage() {
             {prevChapter ? (
               <Link
                 href={`/stories/${slug}/chapters/${prevChapter.id}`}
-                className="flex items-center gap-2 text-sm text-indigo-600 hover:underline"
+                className="flex items-center gap-2 text-sm text-indigo-400 hover:underline"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -160,7 +232,7 @@ export default function ChapterReadPage() {
             {nextChapter ? (
               <Link
                 href={`/stories/${slug}/chapters/${nextChapter.id}`}
-                className="flex items-center gap-2 text-sm text-indigo-600 hover:underline"
+                className="flex items-center gap-2 text-sm text-indigo-400 hover:underline"
               >
                 Chương kế: {nextChapter.chapterNumber}
                 {nextChapter.title && ` - ${nextChapter.title}`}
@@ -173,7 +245,49 @@ export default function ChapterReadPage() {
             )}
           </div>
         </div>
-      </main>
-    </div>
+
+        <div className="mt-12 pt-6 border-t border-border">
+          <h3 className="text-lg font-bold mb-4 text-foreground">Bình luận ({comments.length})</h3>
+
+          <form onSubmit={handleSubmitComment} className="mb-6">
+            <textarea
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              placeholder="Viết bình luận..."
+              className="w-full rounded-lg border border-border bg-background p-3 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-foreground"
+              rows={3}
+            />
+            <div className="mt-2 flex justify-end">
+              <button
+                type="submit"
+                disabled={submittingComment || !newComment.trim()}
+                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-indigo-700 disabled:opacity-50"
+              >
+                {submittingComment ? "Đang gửi..." : "Gửi bình luận"}
+              </button>
+            </div>
+          </form>
+
+          {commentsLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="animate-pulse">
+                  <div className="h-4 bg-muted rounded w-1/4 mb-2" />
+                  <div className="h-16 bg-muted rounded" />
+                </div>
+              ))}
+            </div>
+          ) : comments.length === 0 ? (
+            <p className="text-muted-foreground text-sm text-center py-4">Chưa có bình luận nào.</p>
+          ) : (
+            <CommentsList
+              comments={comments}
+              chapterId={chapterId}
+              onReload={loadComments}
+            />
+          )}
+        </div>
+      </div>
+    </PageLayout>
   );
 }

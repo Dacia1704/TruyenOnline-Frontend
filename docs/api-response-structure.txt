@@ -155,3 +155,21 @@ public class ModerationActionResponse {
 
     LocalDateTime createdAt;
 }
+
+public class BookmarkResponse {
+    UserResponse user;
+    StoryResponse story;
+}
+public class CommentResponse {
+    String id;
+    String type;
+    String content;
+    UserResponse author;
+    List<CommentResponse> replies;
+}
+public class ReadingHistoryResponse {
+    String id;
+    StoryResponse story;
+    ChapterResponse chapter;
+    LocalDateTime lastReadAt;
+}

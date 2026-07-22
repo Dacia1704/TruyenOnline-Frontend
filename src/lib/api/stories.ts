@@ -1,4 +1,4 @@
-import type { PageResponse, Story, StoryPublishRequestResponse, StoryStatus, StoryType, StoryPublishRequestStatus, Chapter, ChapterPage, User } from "@/lib/types/stories";
+import type { PageResponse, Story, StoryPublishRequestResponse, StoryStatus, StoryType, StoryPublishRequestStatus, Chapter, ChapterPage, User, Bookmark, ReadingHistory, Comment } from "@/lib/types/stories";
 import { apiClient } from "./client";
 
 // ============ Stories ============
@@ -11,16 +11,21 @@ export async function getStories(params: {
   type?: StoryType;
   status?: StoryStatus;
   isPublished?: boolean;
+  sortType?: "NEWEST" | "UPDATED" | "VIEW" | "FOLLOW" | "ALPHABET_ASC" | "ALPHABET_DESC" | "OLDEST";
+  genres?: string[];
 }) {
-  const { data } = await apiClient.get<{ code: number; data: PageResponse<Story> }>("/api/stories", {
+  const { data } = await apiClient.post<{ code: number; data: PageResponse<Story> }>("/api/stories/list", {
+    search: params.search ?? "",
+    uploaderId: params.uploaderId,
+    type: params.type,
+    status: params.status,
+    isPublished: params.isPublished,
+    sortType: params.sortType,
+    genres: params.genres,
+  }, {
     params: {
       page: params.page ?? 1,
       size: params.size ?? 12,
-      search: params.search ?? "",
-      uploaderId: params.uploaderId ?? undefined,
-      type: params.type,
-      status: params.status,
-      isPublished: params.isPublished,
     },
   });
   return data.data;
@@ -286,4 +291,137 @@ export async function uploadStoryCover(file: File) {
     { headers: { "Content-Type": "multipart/form-data" } }
   );
   return data.data.url;
+}
+
+// ============ Bookmarks ============
+
+export async function getBookmark(storyId: string) {
+  try {
+    const { data } = await apiClient.get<{ code: number; data: Bookmark }>("/api/bookmarks", {
+      params: { storyId },
+    });
+    return data.data;
+  } catch {
+    return null;
+  }
+}
+
+export async function createBookmark(storyId: string) {
+  const { data } = await apiClient.post<{ code: number; data: Bookmark }>("/api/bookmarks", null, {
+    params: { storyId },
+  });
+  return data.data;
+}
+
+export async function deleteBookmark(storyId: string) {
+  const { data } = await apiClient.delete<{ code: number; message: string }>("/api/bookmarks", {
+    params: { storyId },
+  });
+  return data;
+}
+
+// ============ Reading Histories ============
+
+export async function getMyReadingHistories(params?: { page?: number; size?: number }) {
+  const { data } = await apiClient.get<{ code: number; data: PageResponse<ReadingHistory> }>(
+    "/api/reading-histories",
+    {
+      params: {
+        page: params?.page ?? 1,
+        size: params?.size ?? 20,
+      },
+    }
+  );
+  return data.data;
+}
+
+export async function getReadingHistory(storyId: string): Promise<ReadingHistory | null> {
+  try {
+    const { data } = await apiClient.get<{ code: number; data: ReadingHistory | null }>(
+      `/api/reading-histories/story/${storyId}`
+    );
+    return data.data;
+  } catch {
+    return null;
+  }
+}
+
+export async function createOrUpdateReadingHistory(chapterId: string, storyId: string, type: "STORY" | "CHAPTER" = "STORY") {
+  try {
+    const { data } = await apiClient.post<{ code: number; data: ReadingHistory }>(
+      "/api/reading-histories",
+      { chapterId, storyId, type }
+    );
+    return data.data;
+  } catch {
+    return null;
+  }
+}
+
+export async function deleteReadingHistory(id: string) {
+  const { data } = await apiClient.delete<{ code: number; message: string }>(
+    `/api/reading-histories/${id}`
+  );
+  return data;
+}
+
+// ============ Comments ============
+
+export async function getComments(params: { chapterId?: string; storyId?: string; page?: number; size?: number }) {
+  if (params.chapterId) {
+    const { data } = await apiClient.get<{ code: number; data: PageResponse<Comment> }>(
+      `/api/comments/chapter/${params.chapterId}`,
+      {
+        params: {
+          page: params.page ?? 1,
+          size: params.size ?? 20,
+        },
+      }
+    );
+    return data.data;
+  }
+  
+  if (params.storyId) {
+    const { data } = await apiClient.get<{ code: number; data: PageResponse<Comment> }>(
+      `/api/comments/story/${params.storyId}`,
+      {
+        params: {
+          page: params.page ?? 1,
+          size: params.size ?? 20,
+        },
+      }
+    );
+    return data.data;
+  }
+  
+  return { currentPage: 1, pageSize: 20, totalPages: 0, totalElements: 0, data: [] };
+}
+
+export async function createComment(payload: { chapterId?: string; storyId?: string; content: string; parentId?: string }) {
+  // Determine comment type based on which ID is provided
+  const type = payload.chapterId ? "CHAPTER" : "STORY";
+  
+  const { data } = await apiClient.post<{ code: number; data: Comment }>("/api/comments", {
+    type,
+    storyId: payload.storyId,
+    chapterId: payload.chapterId,
+    content: payload.content,
+    parentId: payload.parentId,
+  });
+  return data.data;
+}
+
+export async function updateComment(commentId: string, content: string) {
+  const { data } = await apiClient.patch<{ code: number; data: Comment }>(
+    `/api/comments/${commentId}`,
+    { content }
+  );
+  return data.data;
+}
+
+export async function deleteComment(commentId: string) {
+  const { data } = await apiClient.delete<{ code: number; message: string }>(
+    `/api/comments/${commentId}`
+  );
+  return data;
 }

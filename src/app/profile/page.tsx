@@ -1,5 +1,6 @@
 "use client";
 
+import { PageLayout } from "@/components/PageLayout";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getUserInfo } from "@/lib/api/client";
@@ -27,17 +28,10 @@ export default function ProfilePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link href="/" className="text-xl font-bold">
-            Truyện<span className="text-indigo-600">Online</span>
-          </Link>
-        </div>
-      </header>
-      <main className="mx-auto max-w-2xl px-6 py-10">
+    <PageLayout>
+      <div className="mx-auto max-w-2xl px-6 py-10">
         <div className="rounded-2xl border border-border bg-card p-6">
-          <h1 className="text-2xl font-bold">Thông tin chung</h1>
+          <h1 className="text-2xl font-bold text-foreground">Thông tin chung</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Thông tin tài khoản được lấy từ thông tin đăng nhập hiện tại.
           </p>
@@ -49,7 +43,7 @@ export default function ProfilePage() {
           ) : (
             <div className="mt-6 space-y-4">
               <div className="flex items-center gap-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-indigo-600 text-lg font-semibold text-white">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-lg font-semibold text-white">
                   {user.avatarUrl ? (
                     <img
                       src={user.avatarUrl}
@@ -61,21 +55,21 @@ export default function ProfilePage() {
                   )}
                 </div>
                 <div>
-                  <p className="text-sm font-semibold">{user.username}</p>
+                  <p className="text-sm font-semibold text-foreground">{user.username}</p>
                   <p className="text-sm text-muted-foreground">{user.email}</p>
                 </div>
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl border border-border p-4">
+                <div className="rounded-xl border border-border p-4 bg-background">
                   <p className="text-xs font-medium text-muted-foreground">Vai trò</p>
-                  <p className="mt-1 text-sm font-medium">
+                  <p className="mt-1 text-sm font-medium text-foreground">
                     {user.roles.length ? user.roles.join(", ") : "Chưa cập nhật"}
                   </p>
                 </div>
-                <div className="rounded-xl border border-border p-4">
+                <div className="rounded-xl border border-border p-4 bg-background">
                   <p className="text-xs font-medium text-muted-foreground">Quyền</p>
-                  <p className="mt-1 text-sm font-medium">
+                  <p className="mt-1 text-sm font-medium text-foreground">
                     {user.permissions.length ? user.permissions.join(", ") : "Chưa cập nhật"}
                   </p>
                 </div>
@@ -83,7 +77,7 @@ export default function ProfilePage() {
             </div>
           )}
         </div>
-      </main>
-    </div>
+      </div>
+    </PageLayout>
   );
 }

@@ -75,5 +75,39 @@ export interface ChapterPage {
 export interface Genre {
   id: number;
   name: string;
+  slug: string;
   storyQuantity?: number;
+}
+
+// ============ Bookmark ============
+
+export interface Bookmark {
+  id: string;
+  user?: User;
+  story?: Story;
+  createdAt?: string;
+}
+
+// ============ Reading History ============
+
+export interface ReadingHistory {
+  id: string;
+  story?: Story;
+  chapter?: Chapter;
+  lastReadAt?: string;
+}
+
+// ============ Comment ============
+
+export interface Comment {
+  id: string;
+  type?: "STORY" | "CHAPTER";
+  content: string;
+  author?: User;
+  chapterId?: string;
+  storyId?: string;
+  parentId?: string | null;
+  replies?: Comment[];
+  createdAt?: string;
+  updatedAt?: string;
 }

@@ -1,42 +1,119 @@
+"use client";
+
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 
-export function Hero() {
-  return (
-    <section className="relative overflow-hidden pt-32 pb-20 px-6">
-      <div className="absolute inset-0 -z-10">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-indigo-500/20 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-purple-500/15 rounded-full blur-3xl" />
-      </div>
+const BANNERS = [
+  {
+    image: "/images/banners/banner1.jpg",
+    alt: "Banner 1",
+  },
+  {
+    image: "/images/banners/banner2.jpg",
+    alt: "Banner 2",
+  },
+  {
+    image: "/images/banners/banner3.png",
+    alt: "Banner 3",
+  },
+];
 
-      <div className="mx-auto max-w-4xl text-center">
-        <span className="inline-block rounded-full bg-indigo-100 dark:bg-indigo-950 px-4 py-1.5 text-xs font-semibold text-indigo-700 dark:text-indigo-300 mb-6">
-          Đọc truyện chữ &amp; manga miễn phí
-        </span>
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-tight">
-          Thế giới truyện
-          <br />
-          <span className="bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-            trong tầm tay bạn
-          </span>
-        </h1>
-        <p className="mt-6 text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-          Khám phá hàng ngàn bộ truyện chữ, light novel và manga. Lưu lịch sử đọc, đánh dấu yêu thích và nâng cấp
-          Premium để trải nghiệm không giới hạn.
-        </p>
-        <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Link
-            href="/register"
-            className="w-full sm:w-auto rounded-xl bg-indigo-600 px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition hover:bg-indigo-700 hover:shadow-indigo-500/40"
+export function Hero() {
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const nextBanner = useCallback(() => {
+    setCurrentIndex((prev) => (prev + 1) % BANNERS.length);
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(nextBanner, 4000);
+    return () => clearInterval(interval);
+  }, [nextBanner]);
+
+  const goToSlide = (index: number) => {
+    setCurrentIndex(index);
+  };
+
+  return (
+    <section className="relative">
+      <div className="relative h-[560px] sm:h-[620px] md:h-[720px] overflow-hidden">
+        {BANNERS.map((banner, index) => (
+          <div
+            key={banner.image}
+            className={`absolute inset-0 transition-opacity duration-1000 ${
+              index === currentIndex ? "opacity-100 z-10" : "opacity-0 z-0"
+            }`}
           >
-            Đăng kí ngay
-          </Link>
-          <Link
-            href="/login"
-            className="w-full sm:w-auto rounded-xl border border-border px-8 py-3.5 text-sm font-semibold transition hover:bg-muted"
-          >
-            Đăng nhập
-          </Link>
+            <img
+              src={banner.image}
+              alt={banner.alt}
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent" />
+          </div>
+        ))}
+
+        <div className="absolute inset-0 z-20 flex flex-col items-center justify-center text-center px-6">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight text-white drop-shadow-2xl">
+            Khám phá thế giới
+            <br />
+            <span className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+              truyện tuyệt vời
+            </span>
+          </h1>
+          <p className="mt-4 text-lg text-white/80 max-w-xl drop-shadow-lg">
+            Đọc truyện chữ, light novel và manga miễn phí. Bookmark, bình luận và trải nghiệm không giới hạn.
+          </p>
+          <div className="mt-8 flex flex-col sm:flex-row items-center gap-3">
+            <Link
+              href="/stories"
+              className="w-full sm:w-auto rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 px-8 py-3.5 text-sm font-semibold text-white shadow-2xl shadow-indigo-500/40 transition hover:scale-105 hover:shadow-indigo-500/60"
+            >
+              Khám phá ngay
+            </Link>
+            <Link
+              href="/register"
+              className="w-full sm:w-auto rounded-xl border-2 border-white/30 bg-white/10 backdrop-blur-sm px-8 py-3.5 text-sm font-semibold text-white transition hover:bg-white/20"
+            >
+              Đăng ký miễn phí
+            </Link>
+          </div>
         </div>
+
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2">
+          {BANNERS.map((_, index) => (
+            <button
+              key={index}
+              onClick={() => goToSlide(index)}
+              className={`h-2 rounded-full transition-all duration-300 ${
+                index === currentIndex
+                  ? "w-8 bg-gradient-to-r from-indigo-400 to-purple-400"
+                  : "w-2 bg-white/40 hover:bg-white/60"
+              }`}
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
+        </div>
+
+        <button
+          onClick={() => setCurrentIndex((prev) => (prev - 1 + BANNERS.length) % BANNERS.length)}
+          className="absolute left-4 top-1/2 -translate-y-1/2 z-30 rounded-full bg-black/30 backdrop-blur-sm p-2 text-white/80 hover:bg-black/50 hover:text-white transition"
+          aria-label="Previous banner"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        <button
+          onClick={() => setCurrentIndex((prev) => (prev + 1) % BANNERS.length)}
+          className="absolute right-4 top-1/2 -translate-y-1/2 z-30 rounded-full bg-black/30 backdrop-blur-sm p-2 text-white/80 hover:bg-black/50 hover:text-white transition"
+          aria-label="Next banner"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
       </div>
     </section>
   );

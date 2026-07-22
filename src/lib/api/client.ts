@@ -2,6 +2,7 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 import type { ApiResponse, RefreshTokenResponse } from "../types/api";
 import { LoginResponse } from "../types/auth";
 import { toast } from "@/lib/toast";
+import { getSessionId } from "./session";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
@@ -48,6 +49,12 @@ apiClient.interceptors.request.use((config) => {
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    // Add session ID for guest users
+    const sessionId = getSessionId();
+    if (sessionId) {
+      config.headers["Session-Id"] = sessionId;
     }
   }
 

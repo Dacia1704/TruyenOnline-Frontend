@@ -13,10 +13,10 @@ const storyTypeLabel: Record<string, string> = {
 };
 
 const statusConfig: Record<string, { text: string; className: string }> = {
-  ONGOING: { text: "Đang ra", className: "bg-emerald-100 text-emerald-700" },
-  COMPLETED: { text: "Hoàn thành", className: "bg-sky-100 text-sky-700" },
-  HIATUS: { text: "Tạm dừng", className: "bg-amber-100 text-amber-700" },
-  CANCELLED: { text: "Đã hủy", className: "bg-rose-100 text-rose-700" },
+  ONGOING: { text: "Đang ra", className: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" },
+  COMPLETED: { text: "Hoàn thành", className: "bg-sky-500/20 text-sky-400 border border-sky-500/30" },
+  HIATUS: { text: "Tạm dừng", className: "bg-amber-500/20 text-amber-400 border border-amber-500/30" },
+  CANCELLED: { text: "Đã hủy", className: "bg-rose-500/20 text-rose-400 border border-rose-500/30" },
 };
 
 export function StoryList() {
@@ -72,25 +72,28 @@ export function StoryList() {
   };
 
   return (
-    <section className="py-16 px-6 bg-muted/50">
+    <section className="pb-4 pt-12 px-6 bg-background dark:bg-slate-900/50">
       <div className="mx-auto max-w-6xl">
         <div className="flex items-end justify-between mb-10">
           <div>
-            <h2 className="text-3xl font-bold">Truyện nổi bật</h2>
-            <p className="mt-2 text-muted-foreground">
+            <h2 className="text-3xl font-bold text-foreground dark:text-white">Truyện nổi bật</h2>
+            <p className="mt-2 text-muted-foreground dark:text-slate-400">
               Những bộ truyện được yêu thích nhất trong thời gian qua.
             </p>
           </div>
           <Link
             href="/stories"
-            className="hidden sm:inline-flex rounded-lg border border-border px-4 py-2 text-sm font-medium transition hover:bg-background"
+            className="hidden sm:inline-flex items-center gap-2 rounded-lg border border-border dark:border-white/20 bg-background dark:bg-white/5 px-4 py-2 text-sm font-medium text-foreground dark:text-white/80 transition hover:bg-muted dark:hover:bg-white/10 hover:text-foreground dark:hover:text-white"
           >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+            </svg>
             Xem tất cả
           </Link>
         </div>
 
         {error && (
-          <div className="rounded-xl border border-border bg-card p-6 text-center text-sm text-red-600">
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 p-6 text-center text-sm text-red-400">
             {error}
           </div>
         )}
@@ -100,12 +103,12 @@ export function StoryList() {
             Array.from({ length: 4 }).map((_, index) => (
               <div
                 key={index}
-                className="rounded-2xl border border-border bg-card overflow-hidden"
+                className="rounded-2xl border border-border dark:border-white/10 bg-card dark:bg-slate-800/50 overflow-hidden"
               >
-                <div className="h-40 bg-muted animate-pulse" />
+                <div className="h-48 bg-muted dark:bg-slate-700 animate-pulse" />
                 <div className="p-4 space-y-3">
-                  <div className="h-4 bg-muted rounded animate-pulse" />
-                  <div className="h-3 bg-muted rounded w-2/3 animate-pulse" />
+                  <div className="h-4 bg-muted dark:bg-slate-700 rounded animate-pulse" />
+                  <div className="h-3 bg-muted dark:bg-slate-700 rounded w-2/3 animate-pulse" />
                 </div>
               </div>
             ))}
@@ -115,11 +118,24 @@ export function StoryList() {
               <Link
                 key={story.id}
                 href={`/stories/${story.slug}`}
-                className="group rounded-2xl border border-border bg-card overflow-hidden transition hover:border-indigo-500/40 hover:shadow-lg hover:shadow-indigo-500/10"
+                className="group rounded-2xl border border-border dark:border-white/10 bg-card dark:bg-slate-800/50 overflow-hidden transition-all duration-300 hover:border-indigo-500/50 dark:hover:border-indigo-500/50 hover:shadow-xl dark:hover:shadow-indigo-500/10 hover:-translate-y-1"
               >
-                <div className="h-40 bg-muted" />
+                {story.coverImageUrl ? (
+                  <img src={story.coverImageUrl} alt={story.title} className="h-48 w-full object-cover" />
+                ) : (
+                  <div className="h-48 bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center">
+                    <svg className="w-10 h-10 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.5}
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                )}
                 <div className="p-4">
-                  <h3 className="font-semibold group-hover:text-indigo-600 transition line-clamp-1">
+                  <h3 className="font-semibold text-foreground dark:text-white group-hover:text-indigo-400 dark:group-hover:text-indigo-400 transition line-clamp-1">
                     {story.title}
                   </h3>
                   <p className="mt-1 text-xs text-muted-foreground">
@@ -128,14 +144,13 @@ export function StoryList() {
                   <div className="mt-3 flex items-center justify-between">
                     <span
                       className={`rounded-full px-3 py-1 text-xs font-medium ${
-                        statusConfig[story.status]?.className ?? "bg-muted"
+                        statusConfig[story.status]?.className ??
+                        "bg-muted dark:bg-slate-700 text-foreground dark:text-slate-300"
                       }`}
                     >
                       {statusConfig[story.status]?.text ?? story.status}
                     </span>
-                    <span className="text-xs text-muted-foreground">
-                      {story.viewCount.toLocaleString()} lượt xem
-                    </span>
+                    <span className="text-xs text-muted-foreground">{story.viewCount.toLocaleString()} lượt xem</span>
                   </div>
                 </div>
               </Link>
@@ -147,7 +162,7 @@ export function StoryList() {
             <button
               onClick={() => goToPage(page - 1)}
               disabled={page === 1}
-              className="rounded-lg border border-border px-4 py-2 text-sm font-medium transition hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-lg border border-border dark:border-white/20 bg-background dark:bg-white/5 px-4 py-2 text-sm font-medium text-foreground dark:text-white/80 transition hover:bg-muted dark:hover:bg-white/10 hover:text-foreground dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Trước
             </button>
@@ -155,7 +170,7 @@ export function StoryList() {
             <div className="flex items-center gap-1">
               {getPageNumbers().map((p, i) =>
                 p === "..." ? (
-                  <span key={`ellipsis-${i}`} className="px-2 text-muted-foreground">
+                  <span key={`ellipsis-${i}`} className="px-2 text-muted-foreground dark:text-slate-500">
                     ...
                   </span>
                 ) : (
@@ -164,20 +179,20 @@ export function StoryList() {
                     onClick={() => goToPage(p)}
                     className={`min-w-[40px] rounded-lg px-3 py-2 text-sm font-medium transition ${
                       p === page
-                        ? "bg-indigo-600 text-white"
-                        : "border border-border hover:bg-background"
+                        ? "bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow-lg shadow-indigo-500/30"
+                        : "border border-border dark:border-white/20 bg-background dark:bg-white/5 text-foreground dark:text-white/80 hover:bg-muted dark:hover:bg-white/10 hover:text-foreground dark:hover:text-white"
                     }`}
                   >
                     {p}
                   </button>
-                )
+                ),
               )}
             </div>
 
             <button
               onClick={() => goToPage(page + 1)}
               disabled={page === totalPages}
-              className="rounded-lg border border-border px-4 py-2 text-sm font-medium transition hover:bg-background disabled:opacity-50 disabled:cursor-not-allowed"
+              className="rounded-lg border border-border dark:border-white/20 bg-background dark:bg-white/5 px-4 py-2 text-sm font-medium text-foreground dark:text-white/80 transition hover:bg-muted dark:hover:bg-white/10 hover:text-foreground dark:hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Sau
             </button>
@@ -185,8 +200,9 @@ export function StoryList() {
         )}
 
         {!loading && totalElements > 0 && (
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            Hiển thị {(page - 1) * 12 + 1} - {Math.min(page * 12, totalElements)} của {totalElements.toLocaleString()} truyện
+          <p className="mt-4 text-center text-sm text-muted-foreground dark:text-slate-500">
+            Hiển thị {(page - 1) * 12 + 1} - {Math.min(page * 12, totalElements)} của {totalElements.toLocaleString()}{" "}
+            truyện
           </p>
         )}
       </div>
