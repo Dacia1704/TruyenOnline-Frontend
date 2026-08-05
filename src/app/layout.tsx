@@ -9,6 +9,9 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "Truyện Online",
   description: "Web đọc truyện online đỉnh cao",
+  icons: {
+    icon: "/images/icon/favicon.png",
+  },
 };
 
 export default function RootLayout({

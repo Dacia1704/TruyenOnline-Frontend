@@ -6,6 +6,21 @@ import { getSessionId } from "./session";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
 
+// ============ Device ID ============
+
+const DEVICE_ID_KEY = "deviceId";
+
+export function getDeviceId(): string {
+  if (typeof window === "undefined") return "";
+
+  let deviceId = localStorage.getItem(DEVICE_ID_KEY);
+  if (!deviceId) {
+    deviceId = crypto.randomUUID();
+    localStorage.setItem(DEVICE_ID_KEY, deviceId);
+  }
+  return deviceId;
+}
+
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -13,7 +28,7 @@ export const apiClient = axios.create({
   },
 });
 
-const refreshClient = axios.create({
+export const refreshClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     "Content-Type": "application/json",
@@ -49,6 +64,12 @@ apiClient.interceptors.request.use((config) => {
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    // Add Device-ID for tracking
+    const deviceId = getDeviceId();
+    if (deviceId) {
+      config.headers["Device-Id"] = deviceId;
     }
 
     // Add session ID for guest users

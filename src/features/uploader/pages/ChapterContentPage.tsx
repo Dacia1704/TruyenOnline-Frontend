@@ -7,10 +7,10 @@ import {
   getChapter,
   getChapterPages,
   updateChapter,
+  updateChapterContent,
   deleteAllPages,
-  type Chapter,
-  type ChapterPage,
 } from "@/lib/api/stories";
+import type { Chapter, ChapterPage } from "@/lib/types/stories";
 
 export default function ChapterContentPage() {
   const params = useParams<{ chapterId?: string }>();
@@ -29,7 +29,6 @@ export default function ChapterContentPage() {
   const [content, setContent] = useState("");
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [previewUrls, setPreviewUrls] = useState<Record<number, string>>({});
-  const [removingPreview, setRemovingPreview] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -42,10 +41,7 @@ export default function ChapterContentPage() {
     setLoading(true);
     setError(null);
     try {
-      const [chapterData, pagesData] = await Promise.all([
-        getChapter(chapterId),
-        getChapterPages(chapterId),
-      ]);
+      const [chapterData, pagesData] = await Promise.all([getChapter(chapterId), getChapterPages(chapterId)]);
       setChapter(chapterData);
       setPages(pagesData);
       setContent(chapterData.content ?? "");
@@ -62,7 +58,7 @@ export default function ChapterContentPage() {
     setError(null);
     setSuccess(null);
     try {
-      const updated = await updateChapter(chapter.id, { content });
+      const updated = await updateChapterContent(chapter.id, content);
       setChapter(updated);
       setSuccess("Lưu nội dung thành công.");
     } catch {
@@ -181,9 +177,7 @@ export default function ChapterContentPage() {
       </div>
 
       {error && (
-        <div className="mt-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
-          {error}
-        </div>
+        <div className="mt-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">{error}</div>
       )}
       {success && (
         <div className="mt-6 rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-700">
@@ -205,14 +199,16 @@ export default function ChapterContentPage() {
             <p className="mt-1 text-sm text-muted-foreground">
               Nhập nội dung văn bản của chương (dành cho light novel).
             </p>
-            <div className="mt-4">
-              <textarea
-                value={content}
-                onChange={(e) => setContent(e.target.value)}
-                rows={12}
-                placeholder="Nhập nội dung chương tại đây..."
-                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
-              />
+            <div className="mt-4 rounded-xl border border-border bg-background">
+              <div className="min-h-[320px] max-h-[640px] overflow-y-auto p-3">
+                <textarea
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                  placeholder="Nhập nội dung chương tại đây..."
+                  className="w-full text-sm outline-none resize-none"
+                  style={{ minHeight: "296px" }}
+                />
+              </div>
               <div className="mt-3 flex justify-end">
                 <button
                   type="button"
@@ -264,9 +260,7 @@ export default function ChapterContentPage() {
                 setPreviewUrls((prev) => ({ ...prev, ...newPreviews }));
               }}
             >
-              <p className="text-sm text-muted-foreground">
-                Kéo thả ảnh vào đây hoặc nhấn để chọn tệp
-              </p>
+              <p className="text-sm text-muted-foreground">Kéo thả ảnh vào đây hoặc nhấn để chọn tệp</p>
               <p className="mt-1 text-xs text-muted-foreground">
                 Hỗ trợ JPG, PNG, WEBP, GIF. Có thể chọn nhiều ảnh cùng lúc.
               </p>
@@ -284,9 +278,7 @@ export default function ChapterContentPage() {
             {pendingFiles.length > 0 && (
               <div className="mt-5">
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-sm font-medium">
-                    {pendingFiles.length} ảnh đang chờ tải lên
-                  </p>
+                  <p className="text-sm font-medium">{pendingFiles.length} ảnh đang chờ tải lên</p>
                   <button
                     type="button"
                     onClick={handleUploadPages}
@@ -302,11 +294,7 @@ export default function ChapterContentPage() {
                       key={index}
                       className="relative aspect-[3/4] rounded-lg overflow-hidden border border-border bg-muted group"
                     >
-                      <img
-                        src={previewUrls[index]}
-                        alt={`Trang ${index + 1}`}
-                        className="w-full h-full object-cover"
-                      />
+                      <img src={previewUrls[index]} alt={`Trang ${index + 1}`} className="w-full h-full object-cover" />
                       <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
                         <button
                           type="button"
@@ -317,7 +305,12 @@ export default function ChapterContentPage() {
                           className="rounded-full bg-rose-600 p-1.5 text-white transition hover:bg-rose-700"
                         >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M6 18L18 6M6 6l12 12"
+                            />
                           </svg>
                         </button>
                       </div>
@@ -332,18 +325,20 @@ export default function ChapterContentPage() {
 
             {pages.length > 0 && (
               <div className="mt-6">
-                <p className="text-sm font-medium mb-3">
-                  Các trang đã tải lên ({pages.length})
-                </p>
+                <p className="text-sm font-medium mb-3">Các trang đã tải lên ({pages.length})</p>
                 <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
                   {pages.map((page) => (
-                    <div key={page.id} className="relative aspect-[3/4] rounded-lg overflow-hidden border border-border bg-muted">
+                    <div
+                      key={page.id}
+                      className="relative aspect-[3/4] rounded-lg overflow-hidden border border-border bg-muted"
+                    >
                       <img
                         src={page.imageUrl}
                         alt={`Trang ${page.pageNumber}`}
                         className="w-full h-full object-cover"
                         onError={(e) => {
-                          (e.target as HTMLImageElement).src = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23f3f4f6' width='100' height='100'/><text x='50' y='55' text-anchor='middle' font-size='10' fill='%239ca3af'>No image</text></svg>";
+                          (e.target as HTMLImageElement).src =
+                            "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%23f3f4f6' width='100' height='100'/><text x='50' y='55' text-anchor='middle' font-size='10' fill='%239ca3af'>No image</text></svg>";
                         }}
                       />
                       <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-xs text-center py-0.5">

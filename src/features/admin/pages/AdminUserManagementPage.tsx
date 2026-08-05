@@ -45,18 +45,18 @@ export default function AdminUserManagementPage() {
 
   return (
     <AdminLayout>
-      <div>
+      <div className="-mx-4 lg:mx-0 px-4 lg:px-0">
         <h1 className="text-2xl font-bold">Quản lý người dùng</h1>
         <p className="mt-1 text-sm text-muted-foreground">Cập nhật role và khóa/mở tài khoản người dùng.</p>
       </div>
 
       {error && (
-        <div className="mt-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">{error}</div>
+        <div className="mt-4 lg:mt-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">{error}</div>
       )}
 
-      <div className="mt-8 rounded-2xl border border-border overflow-hidden">
+      <div className="mt-4 lg:mt-8 rounded-2xl border border-border overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm min-w-[600px]">
             <thead className="bg-muted">
               <tr>
                 <th className="px-4 py-3 text-left font-medium">Người dùng</th>

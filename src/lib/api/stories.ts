@@ -1,4 +1,17 @@
-import type { PageResponse, Story, StoryPublishRequestResponse, StoryStatus, StoryType, StoryPublishRequestStatus, Chapter, ChapterPage, User, Bookmark, ReadingHistory, Comment } from "@/lib/types/stories";
+import type {
+  PageResponse,
+  Story,
+  StoryPublishRequestResponse,
+  StoryStatus,
+  StoryType,
+  StoryPublishRequestStatus,
+  Chapter,
+  ChapterPage,
+  User,
+  Bookmark,
+  ReadingHistory,
+  Comment,
+} from "@/lib/types/stories";
 import { apiClient } from "./client";
 
 // ============ Stories ============
@@ -14,20 +27,24 @@ export async function getStories(params: {
   sortType?: "NEWEST" | "UPDATED" | "VIEW" | "FOLLOW" | "ALPHABET_ASC" | "ALPHABET_DESC" | "OLDEST";
   genres?: string[];
 }) {
-  const { data } = await apiClient.post<{ code: number; data: PageResponse<Story> }>("/api/stories/list", {
-    search: params.search ?? "",
-    uploaderId: params.uploaderId,
-    type: params.type,
-    status: params.status,
-    isPublished: params.isPublished,
-    sortType: params.sortType,
-    genres: params.genres,
-  }, {
-    params: {
-      page: params.page ?? 1,
-      size: params.size ?? 12,
+  const { data } = await apiClient.post<{ code: number; data: PageResponse<Story> }>(
+    "/api/stories/list",
+    {
+      search: params.search ?? "",
+      uploaderId: params.uploaderId,
+      type: params.type,
+      status: params.status,
+      isPublished: params.isPublished,
+      sortType: params.sortType,
+      genres: params.genres,
     },
-  });
+    {
+      params: {
+        page: params.page ?? 1,
+        size: params.size ?? 12,
+      },
+    },
+  );
   return data.data;
 }
 
@@ -75,16 +92,19 @@ export async function createStory(payload: {
   return data.data;
 }
 
-export async function updateStory(id: string, payload: Partial<{
-  title: string;
-  description: string;
-  coverImageUrl: string;
-  storyType: StoryType;
-  status: StoryStatus;
-  isPublished: boolean;
-  freeChapterLimit: number | null;
-  coverImageFile: File;
-}>) {
+export async function updateStory(
+  id: string,
+  payload: Partial<{
+    title: string;
+    description: string;
+    coverImageUrl: string;
+    storyType: StoryType;
+    status: StoryStatus;
+    isPublished: boolean;
+    freeChapterLimit: number | null;
+    coverImageFile: File | null;
+  }>,
+) {
   if (payload.coverImageFile) {
     const formData = new FormData();
     if (payload.title) formData.append("title", payload.title);
@@ -111,26 +131,36 @@ export async function deleteStory(id: string) {
   return data;
 }
 
-export async function banStory(id: string) {
-  const { data } = await apiClient.patch<{ code: number; data: Story }>(`/api/stories/${id}/ban`);
+export type ViolationType = "COPYRIGHT" | "PORNOGRAPHY" | "VIOLENCE" | "SPAM" | "HARASSMENT" | "OTHER";
+
+export async function banStory(id: string, violationType: ViolationType, reason: string) {
+  const { data } = await apiClient.patch<{ code: number; data: Story }>(`/api/stories/${id}/ban`, {
+    violationType,
+    reason,
+  });
   return data.data;
 }
 
-export async function unbanStory(id: string) {
-  const { data } = await apiClient.patch<{ code: number; data: Story }>(`/api/stories/${id}/unban`);
+export async function unbanStory(id: string, reason: string) {
+  const { data } = await apiClient.patch<{ code: number; data: Story }>(`/api/stories/${id}/unban`, {
+    reason,
+  });
   return data.data;
 }
 
 // ============ Chapters ============
 
 export async function getChapters(storyId: string, params?: { page?: number; size?: number; search?: string }) {
-  const { data } = await apiClient.get<{ code: number; data: PageResponse<Chapter> }>(`/api/stories/${storyId}/chapters`, {
-    params: {
-      page: params?.page ?? 1,
-      size: params?.size ?? 50,
-      search: params?.search ?? "",
+  const { data } = await apiClient.get<{ code: number; data: PageResponse<Chapter> }>(
+    `/api/stories/${storyId}/chapters`,
+    {
+      params: {
+        page: params?.page ?? 1,
+        size: params?.size ?? 50,
+        search: params?.search ?? "",
+      },
     },
-  });
+  );
   return data.data;
 }
 
@@ -145,7 +175,10 @@ export async function getChaptersBySlug(slug: string, params?: { page?: number; 
   return data.data;
 }
 
-export async function createChapter(storyId: string, payload: { chapterNumber?: number; title?: string; isPublished?: boolean }) {
+export async function createChapter(
+  storyId: string,
+  payload: { chapterNumber?: number; title?: string; isPublished?: boolean },
+) {
   const { data } = await apiClient.post<{ code: number; data: Chapter }>(`/api/stories/${storyId}/chapters`, {
     chapterNumber: payload.chapterNumber,
     title: payload.title,
@@ -159,17 +192,22 @@ export async function getChapter(chapterId: string) {
   return data.data;
 }
 
-export async function updateChapter(chapterId: string, payload: Partial<{
-  chapterNumber: number;
-  title: string;
-  isPublished: boolean;
-}>) {
+export async function updateChapter(
+  chapterId: string,
+  payload: Partial<{
+    chapterNumber: number;
+    title: string;
+    isPublished: boolean;
+  }>,
+) {
   const { data } = await apiClient.patch<{ code: number; data: Chapter }>(`/api/chapters/${chapterId}`, payload);
   return data.data;
 }
 
 export async function updateChapterContent(chapterId: string, content: string) {
-  const { data } = await apiClient.patch<{ code: number; data: Chapter }>(`/api/chapters/${chapterId}/update-content`, { content });
+  const { data } = await apiClient.patch<{ code: number; data: Chapter }>(`/api/chapters/${chapterId}/update-content`, {
+    content,
+  });
   return data.data;
 }
 
@@ -218,12 +256,16 @@ export async function deleteAllPages(chapterId: string) {
 export async function requestPublish(storyId: string, requesterNote?: string) {
   const { data } = await apiClient.post<{ code: number; data: StoryPublishRequestResponse }>(
     `/api/stories/${storyId}/publish-requests`,
-    { requesterNote }
+    { requesterNote },
   );
   return data.data;
 }
 
-export async function getMyPublishRequests(params?: { page?: number; size?: number; status?: StoryPublishRequestStatus }) {
+export async function getMyPublishRequests(params?: {
+  page?: number;
+  size?: number;
+  status?: StoryPublishRequestStatus;
+}) {
   const { data } = await apiClient.get<{ code: number; data: PageResponse<StoryPublishRequestResponse> }>(
     "/api/stories/publish-requests/me",
     {
@@ -232,12 +274,17 @@ export async function getMyPublishRequests(params?: { page?: number; size?: numb
         size: params?.size ?? 20,
         ...(params?.status ? { status: params.status } : {}),
       },
-    }
+    },
   );
   return data.data.data;
 }
 
-export async function getPublishRequests(params?: { page?: number; size?: number; status?: StoryPublishRequestStatus; uploaderId?: string }) {
+export async function getPublishRequests(params?: {
+  page?: number;
+  size?: number;
+  status?: StoryPublishRequestStatus;
+  uploaderId?: string;
+}) {
   const { data } = await apiClient.get<{ code: number; data: PageResponse<StoryPublishRequestResponse> }>(
     "/api/stories/publish-requests",
     {
@@ -247,7 +294,7 @@ export async function getPublishRequests(params?: { page?: number; size?: number
         ...(params?.status ? { status: params.status } : {}),
         ...(params?.uploaderId ? { uploaderId: params.uploaderId } : {}),
       },
-    }
+    },
   );
   return data.data.data;
 }
@@ -255,7 +302,7 @@ export async function getPublishRequests(params?: { page?: number; size?: number
 export async function approvePublishRequest(id: string, reviewerNote?: string) {
   const { data } = await apiClient.patch<{ code: number; data: StoryPublishRequestResponse }>(
     `/api/stories/publish-requests/approve/${id}`,
-    { reviewerNote }
+    { reviewerNote },
   );
   return data.data;
 }
@@ -263,7 +310,7 @@ export async function approvePublishRequest(id: string, reviewerNote?: string) {
 export async function rejectPublishRequest(id: string, reviewerNote?: string) {
   const { data } = await apiClient.patch<{ code: number; data: StoryPublishRequestResponse }>(
     `/api/stories/publish-requests/reject/${id}`,
-    { reviewerNote }
+    { reviewerNote },
   );
   return data.data;
 }
@@ -288,7 +335,7 @@ export async function uploadStoryCover(file: File) {
   const { data } = await apiClient.post<{ code: number; data: { url: string } }>(
     "/api/stories/upload-cover",
     formData,
-    { headers: { "Content-Type": "multipart/form-data" } }
+    { headers: { "Content-Type": "multipart/form-data" } },
   );
   return data.data.url;
 }
@@ -323,22 +370,19 @@ export async function deleteBookmark(storyId: string) {
 // ============ Reading Histories ============
 
 export async function getMyReadingHistories(params?: { page?: number; size?: number }) {
-  const { data } = await apiClient.get<{ code: number; data: PageResponse<ReadingHistory> }>(
-    "/api/reading-histories",
-    {
-      params: {
-        page: params?.page ?? 1,
-        size: params?.size ?? 20,
-      },
-    }
-  );
+  const { data } = await apiClient.get<{ code: number; data: PageResponse<ReadingHistory> }>("/api/reading-histories", {
+    params: {
+      page: params?.page ?? 1,
+      size: params?.size ?? 20,
+    },
+  });
   return data.data;
 }
 
 export async function getReadingHistory(storyId: string): Promise<ReadingHistory | null> {
   try {
     const { data } = await apiClient.get<{ code: number; data: ReadingHistory | null }>(
-      `/api/reading-histories/story/${storyId}`
+      `/api/reading-histories/story/${storyId}`,
     );
     return data.data;
   } catch {
@@ -346,12 +390,17 @@ export async function getReadingHistory(storyId: string): Promise<ReadingHistory
   }
 }
 
-export async function createOrUpdateReadingHistory(chapterId: string, storyId: string, type: "STORY" | "CHAPTER" = "STORY") {
+export async function createOrUpdateReadingHistory(
+  chapterId: string,
+  storyId: string,
+  type: "STORY" | "CHAPTER" = "STORY",
+) {
   try {
-    const { data } = await apiClient.post<{ code: number; data: ReadingHistory }>(
-      "/api/reading-histories",
-      { chapterId, storyId, type }
-    );
+    const { data } = await apiClient.post<{ code: number; data: ReadingHistory }>("/api/reading-histories", {
+      chapterId,
+      storyId,
+      type,
+    });
     return data.data;
   } catch {
     return null;
@@ -359,9 +408,7 @@ export async function createOrUpdateReadingHistory(chapterId: string, storyId: s
 }
 
 export async function deleteReadingHistory(id: string) {
-  const { data } = await apiClient.delete<{ code: number; message: string }>(
-    `/api/reading-histories/${id}`
-  );
+  const { data } = await apiClient.delete<{ code: number; message: string }>(`/api/reading-histories/${id}`);
   return data;
 }
 
@@ -376,11 +423,11 @@ export async function getComments(params: { chapterId?: string; storyId?: string
           page: params.page ?? 1,
           size: params.size ?? 20,
         },
-      }
+      },
     );
     return data.data;
   }
-  
+
   if (params.storyId) {
     const { data } = await apiClient.get<{ code: number; data: PageResponse<Comment> }>(
       `/api/comments/story/${params.storyId}`,
@@ -389,18 +436,23 @@ export async function getComments(params: { chapterId?: string; storyId?: string
           page: params.page ?? 1,
           size: params.size ?? 20,
         },
-      }
+      },
     );
     return data.data;
   }
-  
+
   return { currentPage: 1, pageSize: 20, totalPages: 0, totalElements: 0, data: [] };
 }
 
-export async function createComment(payload: { chapterId?: string; storyId?: string; content: string; parentId?: string }) {
+export async function createComment(payload: {
+  chapterId?: string;
+  storyId?: string;
+  content: string;
+  parentId?: string;
+}) {
   // Determine comment type based on which ID is provided
   const type = payload.chapterId ? "CHAPTER" : "STORY";
-  
+
   const { data } = await apiClient.post<{ code: number; data: Comment }>("/api/comments", {
     type,
     storyId: payload.storyId,
@@ -412,16 +464,240 @@ export async function createComment(payload: { chapterId?: string; storyId?: str
 }
 
 export async function updateComment(commentId: string, content: string) {
-  const { data } = await apiClient.patch<{ code: number; data: Comment }>(
-    `/api/comments/${commentId}`,
-    { content }
-  );
+  const { data } = await apiClient.patch<{ code: number; data: Comment }>(`/api/comments/${commentId}`, { content });
   return data.data;
 }
 
 export async function deleteComment(commentId: string) {
-  const { data } = await apiClient.delete<{ code: number; message: string }>(
-    `/api/comments/${commentId}`
-  );
+  const { data } = await apiClient.delete<{ code: number; message: string }>(`/api/comments/${commentId}`);
   return data;
+}
+
+// ============ Genres ============
+
+export interface Genre {
+  id: number;
+  name: string;
+  slug: string;
+}
+
+export async function getGenres(): Promise<Genre[]> {
+  const { data } = await apiClient.get<{ code: number; data: Genre[] }>("/api/genres");
+  return data.data;
+}
+
+// ============ Authors ============
+
+export interface Author {
+  id: string;
+  name: string;
+  nameNoAccent?: string;
+  slug?: string;
+  bio?: string;
+  avatarUrl?: string;
+  country?: string;
+}
+
+export interface StoryAuthorUpdateRequest {
+  authorId: string;
+  role: "AUTHOR" | "CO_AUTHOR" | "ILLUSTRATOR" | "TRANSLATOR";
+  sortOrder?: number;
+}
+
+export async function getAuthors(params?: { page?: number; size?: number; search?: string }): Promise<{
+  currentPage: number;
+  pageSize: number;
+  totalPages: number;
+  totalElements: number;
+  data: Author[];
+}> {
+  const { data } = await apiClient.get<{ code: number; data: {
+    currentPage: number;
+    pageSize: number;
+    totalPages: number;
+    totalElements: number;
+    data: Author[];
+  }}>("/api/authors", {
+    params: {
+      page: params?.page ?? 1,
+      size: params?.size ?? 50,
+      search: params?.search,
+    },
+  });
+  return data.data;
+}
+
+export async function createAuthor(payload: {
+  name: string;
+  bio?: string;
+  country?: string;
+  avatarFile?: File;
+}): Promise<Author> {
+  const formData = new FormData();
+  formData.append("name", payload.name);
+  if (payload.bio) formData.append("bio", payload.bio);
+  if (payload.country) formData.append("country", payload.country);
+  if (payload.avatarFile) formData.append("avatarFile", payload.avatarFile);
+
+  const { data } = await apiClient.post<{ code: number; data: Author }>("/api/authors", formData, {
+    headers: { "Content-Type": undefined },
+  } as never);
+  return data.data;
+}
+
+export async function updateStoryAuthors(storyId: string, authors: StoryAuthorUpdateRequest[]): Promise<unknown> {
+  const { data } = await apiClient.put<{ code: number; data: unknown }>(
+    `/api/authors/story/${storyId}`,
+    authors,
+  );
+  return data.data;
+}
+
+// ============ Ban/Unban Comment ============
+
+export type ViolationType = "COPYRIGHT" | "PORNOGRAPHY" | "VIOLENCE" | "SPAM" | "HARASSMENT" | "OTHER";
+
+export async function banComment(commentId: string, violationType: ViolationType, reason: string) {
+  const { data } = await apiClient.patch<{ code: number; data: Comment }>(`/api/comments/${commentId}/ban`, {
+    violationType,
+    reason,
+  });
+  return data.data;
+}
+
+export async function unbanComment(commentId: string, reason: string) {
+  const { data } = await apiClient.patch<{ code: number; data: Comment }>(`/api/comments/${commentId}/unban`, {
+    reason,
+  });
+  return data.data;
+}
+
+// ============ Moderation Actions ============
+
+export type ModerationActionType = "BAN" | "UNBAN";
+export type ModerationObjectType = "STORY" | "CHAPTER" | "COMMENT" | "USER";
+
+export interface ModerationAction {
+  id: string;
+  objectId: string;
+  objectType: ModerationObjectType;
+  actionType: ModerationActionType;
+  violationType?: ViolationType;
+  reason?: string;
+  adminId?: string;
+  adminUsername?: string;
+  createdAt?: string;
+}
+
+export async function getModerationActions(params: {
+  page?: number;
+  size?: number;
+  objectType?: ModerationObjectType;
+  actionType?: ModerationActionType;
+  violationType?: ViolationType;
+  objectId?: string;
+}) {
+  const { data } = await apiClient.get<{ code: number; data: PageResponse<ModerationAction> }>(
+    "/api/moderation-actions",
+    {
+      params: {
+        page: params.page ?? 1,
+        size: params.size ?? 20,
+        objectType: params.objectType,
+        actionType: params.actionType,
+        violationType: params.violationType,
+        objectId: params.objectId,
+      },
+    },
+  );
+  return data.data;
+}
+
+export async function getModerationActionById(id: string): Promise<ModerationAction | null> {
+  try {
+    const { data } = await apiClient.get<{ code: number; data: ModerationAction | null }>(
+      `/api/moderation-actions/${id}`,
+    );
+    return data.data;
+  } catch {
+    return null;
+  }
+}
+
+// ============ Ban Appeals ============
+
+export type BanAppealStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+export interface BanAppeal {
+  id: string;
+  user?: User;
+  moderationAction?: ModerationAction;
+  content: string;
+  status: BanAppealStatus;
+  reviewer?: User;
+  reviewerNote?: string;
+  resolvedAt?: string;
+  attachments?: { id: string; attachmentUrl: string; createdAt?: string }[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export async function getMyBanAppeals(params?: { page?: number; size?: number }) {
+  const { data } = await apiClient.get<{ code: number; data: PageResponse<BanAppeal> }>(
+    "/api/ban-appeals/me",
+    {
+      params: {
+        page: params?.page ?? 1,
+        size: params?.size ?? 20,
+      },
+    },
+  );
+  return data.data;
+}
+
+export async function createBanAppeal(moderationActionId: string, content: string, attachments?: File[]) {
+  const formData = new FormData();
+  formData.append("moderationActionId", moderationActionId);
+  formData.append("content", content);
+  if (attachments) {
+    attachments.forEach((file) => formData.append("attachments", file));
+  }
+  const { data } = await apiClient.post<{ code: number; data: BanAppeal }>("/api/ban-appeals", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data.data;
+}
+
+export async function deleteBanAppeal(id: string) {
+  const { data } = await apiClient.delete<{ code: number; message: string }>(`/api/ban-appeals/${id}`);
+  return data;
+}
+
+export async function getAllBanAppeals(params?: { page?: number; size?: number }) {
+  const { data } = await apiClient.get<{ code: number; data: PageResponse<BanAppeal> }>(
+    "/api/ban-appeals",
+    {
+      params: {
+        page: params?.page ?? 1,
+        size: params?.size ?? 20,
+      },
+    },
+  );
+  return data.data;
+}
+
+export async function approveBanAppeal(id: string, reviewerNote?: string) {
+  const { data } = await apiClient.patch<{ code: number; data: BanAppeal }>(
+    `/api/ban-appeals/${id}/approve`,
+    { reviewerNote },
+  );
+  return data.data;
+}
+
+export async function rejectBanAppeal(id: string, reviewerNote: string) {
+  const { data } = await apiClient.patch<{ code: number; data: BanAppeal }>(
+    `/api/ban-appeals/${id}/reject`,
+    { reviewerNote },
+  );
+  return data.data;
 }

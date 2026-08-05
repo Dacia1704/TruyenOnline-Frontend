@@ -9,6 +9,7 @@ export function RegisterForm() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [isUploader, setIsUploader] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const registerMutation = useRegister();
 
@@ -29,7 +30,7 @@ export function RegisterForm() {
       return;
     }
 
-    registerMutation.mutate({ email, username, password });
+    registerMutation.mutate({ email, username, password, isUploader });
   };
 
   const errorMessage =
@@ -111,6 +112,19 @@ export function RegisterForm() {
           placeholder="••••••••"
           className="w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
         />
+      </div>
+
+      <div className="flex items-center gap-3">
+        <input
+          id="isUploader"
+          type="checkbox"
+          checked={isUploader}
+          onChange={(e) => setIsUploader(e.target.checked)}
+          className="h-4 w-4 rounded border-border bg-background text-indigo-600 focus:ring-indigo-500"
+        />
+        <label htmlFor="isUploader" className="text-sm cursor-pointer">
+          <span className="font-medium">Đăng ký làm người đăng truyện (Uploader)</span>
+        </label>
       </div>
 
       <button

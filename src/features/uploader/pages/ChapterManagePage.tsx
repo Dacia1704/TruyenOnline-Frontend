@@ -7,12 +7,14 @@ import {
   createChapter,
   deleteChapter,
   getChaptersBySlug,
+  getChapter,
+  getChapterPages,
   getMyInfo,
   getStories,
   updateChapter,
   updateChapterPublishStatus,
 } from "@/lib/api/stories";
-import type { Chapter } from "@/lib/api/stories";
+import type { Chapter, ChapterPage } from "@/lib/types/stories";
 import type { Story } from "@/lib/types/stories";
 
 type PublishStatus = "PUBLISH" | "DRAFT";
@@ -39,6 +41,11 @@ export default function ChapterManagePage() {
   const [selectedChapterIds, setSelectedChapterIds] = useState<string[]>([]);
   const [publishingLoading, setPublishingLoading] = useState(false);
   const [chapterDropdownOpen, setChapterDropdownOpen] = useState(false);
+
+  const [previewChapter, setPreviewChapter] = useState<Chapter | null>(null);
+  const [previewPages, setPreviewPages] = useState<ChapterPage[]>([]);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
     if (!slug || Array.isArray(slug)) return;
@@ -149,6 +156,29 @@ export default function ChapterManagePage() {
     } finally {
       setSavingChapter(null);
     }
+  };
+
+  const handlePreviewChapter = async (chapter: Chapter) => {
+    setPreviewLoading(true);
+    setShowPreview(true);
+    try {
+      const [fullChapter, pages] = await Promise.all([
+        getChapter(chapter.id),
+        getChapterPages(chapter.id),
+      ]);
+      setPreviewChapter(fullChapter);
+      setPreviewPages(pages.length > 0 ? pages : []);
+    } catch {
+      setError("Không tải được nội dung chương.");
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  const handleClosePreview = () => {
+    setShowPreview(false);
+    setPreviewChapter(null);
+    setPreviewPages([]);
   };
 
   if (!slug || Array.isArray(slug) || !story?.id) {
@@ -424,14 +454,21 @@ export default function ChapterManagePage() {
                     </button>
                   </>
                 ) : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => router.push(`/uploader/stories/${slug}/chapters/${chapter.id}/content`)}
-                      className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700"
-                    >
-                      Nội dung
-                    </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => handlePreviewChapter(chapter)}
+                    className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition hover:bg-muted"
+                  >
+                    Xem demo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/uploader/stories/${slug}/chapters/${chapter.id}/content`)}
+                    className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700"
+                  >
+                    Nội dung
+                  </button>
                     <button
                       type="button"
                       onClick={() => startEdit(chapter)}
@@ -454,6 +491,55 @@ export default function ChapterManagePage() {
           );
         })}
       </div>
+
+      {showPreview && (
+        <div className="fixed inset-0 z-50 flex bg-black/80" onClick={handleClosePreview}>
+          <div
+            className="w-full max-w-2xl bg-background h-full overflow-y-auto ml-auto transition-transform duration-300"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-background px-4 py-3">
+              <div className="min-w-0">
+                <p className="font-semibold truncate">
+                  {previewChapter ? `Chương ${previewChapter.chapterNumber}: ${previewChapter.title}` : "Đang tải..."}
+                </p>
+              </div>
+              <button
+                onClick={handleClosePreview}
+                className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium transition hover:bg-muted ml-4 shrink-0"
+              >
+                Đóng
+              </button>
+            </div>
+            <div className="p-4">
+              {previewLoading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="aspect-[3/4] bg-muted rounded animate-pulse" />
+                  ))}
+                </div>
+              ) : previewPages.length > 0 ? (
+                <div className="space-y-4">
+                  {previewPages.sort((a, b) => a.pageNumber - b.pageNumber).map((page) => (
+                    <div key={page.id} className="bg-muted rounded overflow-hidden">
+                      <img src={page.imageUrl} alt={`Trang ${page.pageNumber}`} className="w-full h-auto" />
+                    </div>
+                  ))}
+                </div>
+              ) : previewChapter?.content ? (
+                <div
+                  className="prose prose-sm dark:prose-invert max-w-none"
+                  dangerouslySetInnerHTML={{ __html: previewChapter.content }}
+                />
+              ) : (
+                <div className="text-center py-12 text-muted-foreground">
+                  Chương này chưa có nội dung.
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </UploaderLayout>
   );
 }

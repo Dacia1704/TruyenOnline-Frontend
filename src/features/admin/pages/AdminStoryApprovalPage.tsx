@@ -110,10 +110,10 @@ export default function AdminStoryApprovalPage() {
       </div>
 
       {error && (
-        <div className="mt-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">{error}</div>
+        <div className="mt-4 lg:mt-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">{error}</div>
       )}
 
-      <div className="mt-8 grid gap-4">
+      <div className="mt-4 lg:mt-8 grid gap-4">
         {loading && (
           <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
             Đang tải danh sách yêu cầu...

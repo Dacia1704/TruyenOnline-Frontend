@@ -5,14 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { UploaderLayout } from "@/features/uploader/components/UploaderLayout";
-import {
-  getChapter,
-  getChapterPages,
-  updateChapter,
-  updateChapterContent,
-  uploadChapterPages,
-} from "@/lib/api/stories";
-import type { Chapter, ChapterPage } from "@/lib/api/stories";
+import { getChapter, getChapterPages, updateChapterContent, uploadChapterPages } from "@/lib/api/stories";
+import type { Chapter, ChapterPage } from "@/lib/types/stories";
 
 function EditorToolbar({ editor }: { editor: NonNullable<ReturnType<typeof useEditor>> }) {
   return (
@@ -79,6 +73,7 @@ export default function ChapterContentManagerPage() {
   const [previewPages, setPreviewPages] = useState<ChapterPage[]>([]);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -183,18 +178,12 @@ export default function ChapterContentManagerPage() {
 
       if (chapterType === "NOVEL") {
         await updateChapterContent(chapterId, content);
-      } else {
-        if (pendingFiles.length > 0) {
-          await uploadChapterPages(
-            chapterId,
-            pendingFiles,
-            pendingFiles.map((_, i) => ({ pageNumber: pages.length + i + 1, isNewPage: true })),
-          );
-        }
-        await updateChapter(chapterId, {
-          pageCount: pages.length + pendingFiles.length,
-          isPublished: chapter?.isPublished,
-        });
+      } else if (pendingFiles.length > 0) {
+        await uploadChapterPages(
+          chapterId,
+          pendingFiles,
+          pendingFiles.map((_, i) => ({ pageNumber: pages.length + i + 1, isNewPage: true })),
+        );
       }
 
       setSuccess("Đã lưu nội dung thành công.");
@@ -270,12 +259,25 @@ export default function ChapterContentManagerPage() {
       )}
 
       {success && (
-        <div className="mt-4 rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-700">{success}</div>
+        <div className="mt-4 rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-700">
+          {success}
+        </div>
       )}
 
-      <section className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="rounded-2xl border border-border bg-card p-6">
-          <h2 className="text-lg font-semibold">Nội dung chương</h2>
+      <section className="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div
+          className={`rounded-2xl border border-border bg-card p-6 transition-all duration-300 ease-in-out ${showPreview ? "lg:col-span-1" : "lg:col-span-2"}`}
+        >
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Nội dung chương</h2>
+            <button
+              type="button"
+              onClick={() => setShowPreview(!showPreview)}
+              className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${showPreview ? "bg-indigo-100 text-indigo-700" : "border border-border hover:bg-muted"}`}
+            >
+              {showPreview ? "Ẩn nội dung" : "Xem nội dung hiện tại"}
+            </button>
+          </div>
           <p className="mt-1 text-sm text-muted-foreground">Chọn loại nội dung và nhập nội dung cho chương.</p>
 
           <div className="mt-5 space-y-5">
@@ -300,7 +302,7 @@ export default function ChapterContentManagerPage() {
                   </div>
                   <EditorContent
                     editor={editor}
-                    className="min-h-[320px] px-3 py-3 text-sm [&_.ProseMirror]:outline-none"
+                    className="min-h-[320px] max-h-[640px] px-3 py-3 text-sm overflow-y-auto [&_.ProseMirror]:outline-none"
                   />
                 </div>
               </div>
@@ -458,12 +460,15 @@ export default function ChapterContentManagerPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border bg-card p-6">
+        <div
+          className={`rounded-2xl border border-border bg-card p-6 transition-all duration-300 ease-in-out ${showPreview ? "opacity-100 translate-x-0" : "opacity-0 -translate-x-4 pointer-events-none absolute"}`}
+          style={{ display: showPreview ? "block" : undefined }}
+        >
           <h2 className="text-lg font-semibold">Demo chương</h2>
           <p className="mt-1 text-sm text-muted-foreground">Xem trước nội dung chương</p>
 
           <div className="mt-4 rounded-xl border border-border bg-background">
-            <div className="min-h-[320px] max-h-[640px] overflow-y-auto p-3 text-sm">
+            <div className="min-h-[320px] max-h-[810px] overflow-y-auto p-3 text-sm">
               {previewLoading ? (
                 <p className="text-muted-foreground">Đang tải demo...</p>
               ) : previewError ? (

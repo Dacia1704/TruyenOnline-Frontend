@@ -1,6 +1,23 @@
 export type StoryType = "COMICS" | "MANHWA" | "MANHUA" | "NOVEL";
 export type StoryStatus = "ONGOING" | "COMPLETED" | "HIATUS" | "CANCELLED";
 
+export interface Author {
+  id: string;
+  name: string;
+  nameNoAccent?: string;
+  slug?: string;
+  bio?: string;
+  avatarUrl?: string;
+  country?: string;
+}
+
+export interface StoryAuthor {
+  author: Author;
+  story?: Story;
+  role: "AUTHOR" | "CO_AUTHOR" | "ILLUSTRATOR" | "TRANSLATOR";
+  sortOrder: number;
+}
+
 export interface Story {
   id: string;
   title: string;
@@ -12,7 +29,11 @@ export interface Story {
   isPublished: boolean;
   freeChapterLimit?: number | null;
   viewCount: number;
+  followCount?: number;
   uploader?: User;
+  authors?: StoryAuthor[];
+  genres?: Genre[];
+  isBanned?: boolean;
   createdAt?: string;
 }
 
@@ -60,6 +81,7 @@ export interface Chapter {
   content?: string;
   pageCount?: number;
   pages?: ChapterPage[];
+  isBanned?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -103,6 +125,7 @@ export interface Comment {
   id: string;
   type?: "STORY" | "CHAPTER";
   content: string;
+  isBanned?: boolean;
   author?: User;
   chapterId?: string;
   storyId?: string;
@@ -110,4 +133,62 @@ export interface Comment {
   replies?: Comment[];
   createdAt?: string;
   updatedAt?: string;
+}
+
+// ============ Banner ============
+
+export interface Banner {
+  id: string;
+  title: string;
+  bannerUrl: string;
+  linkUrl?: string;
+  position: "HOME_HERO" | "POPUP";
+  sortOrder: number;
+  isActive: boolean;
+  clickCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// ============ Moderation ============
+
+export type ModerationActionType = "BAN" | "UNBAN";
+export type ModerationObjectType = "STORY" | "CHAPTER" | "COMMENT" | "USER";
+export type ViolationType = "COPYRIGHT" | "PORNOGRAPHY | VIOLENCE" | "SPAM" | "HARASSMENT" | "OTHER";
+
+export interface ModerationAction {
+  id: string;
+  objectId: string;
+  objectType: ModerationObjectType;
+  actionType: ModerationActionType;
+  violationType?: ViolationType;
+  reason?: string;
+  adminId?: string;
+  adminUsername?: string;
+  createdAt?: string;
+}
+
+// ============ Ban Appeal ============
+
+export type BanAppealStatus = "PENDING" | "APPROVED" | "REJECTED";
+
+export interface BanAppeal {
+  id: string;
+  user?: User;
+  moderationAction?: ModerationAction;
+  content: string;
+  status: BanAppealStatus;
+  reviewer?: User;
+  reviewerNote?: string;
+  resolvedAt?: string;
+  attachments?: { id: string; attachmentUrl: string; createdAt?: string }[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// ============ Social Account ============
+
+export interface SocialAccount {
+  provider: "GOOGLE" | "FACEBOOK" | "LOCAL";
+  linked: boolean;
 }

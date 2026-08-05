@@ -2,28 +2,42 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter, usePathname } from "next/navigation";
 import { Footer } from "./components/Footer";
 import { Hero } from "./components/Hero";
 import { MyStoryList } from "./components/MyStoryList";
 import { Navbar } from "./components/Navbar";
+import { FeaturedStories } from "./components/FeaturedStories";
+import { NewUpdatedStories } from "./components/NewUpdatedStories";
 import { StoryList } from "./components/StoryList";
 
 export function LandingPage() {
-  const [view, setView] = useState<"reader" | "uploader">("reader");
+  const pathname = usePathname();
+  // eslint-disable-next-line
+  const [view, setView] = useState<"reader" | "uploader">(pathname === "/uploader" ? "uploader" : "reader");
+  const router = useRouter();
+
+  const handleToggleUploader = () => {
+    if (view === "reader") {
+      router.push("/uploader");
+    } else {
+      router.push("/");
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <Navbar uploaderView={view} onToggleUploader={() => setView((v) => (v === "reader" ? "uploader" : "reader"))} />
+      <Navbar uploaderView={view} onToggleUploader={handleToggleUploader} />
       {view === "reader" ? (
-        <main className="flex-1">
+        <main className="flex-1 pt-16">
           <Hero />
-          <div className="pt-0">
-            <StoryList />
-          </div>
+          <FeaturedStories />
+          <NewUpdatedStories />
+          <StoryList />
         </main>
       ) : (
         <main className="flex-1 pt-20 py-10 px-6">
-          <div className="mx-auto max-w-5xl">
+          <div className="mx-auto max-w-7xl px-6">
             <div className="rounded-2xl border border-border bg-card p-6 dark:border-white/10">
               <h1 className="text-2xl font-bold text-foreground">Trung tâm Uploader</h1>
               <p className="mt-2 text-sm text-muted-foreground">
@@ -52,7 +66,7 @@ export function LandingPage() {
                 </Link>
               </div>
 
-              <div className="mt-6 rounded-xl border border-dashed border-border p-5 text-sm text-muted-foreground dark:border-white/10">
+              <div className="mt-3 rounded-xl border border-dashed border-border p-3 text-sm text-muted-foreground dark:border-white/10">
                 Mẹo nhanh: sau khi tạo truyện, nhấn vào truyện trong danh sách để quản lý chương.
               </div>
 

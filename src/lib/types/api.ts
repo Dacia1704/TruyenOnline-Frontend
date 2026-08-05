@@ -35,4 +35,18 @@ export interface RegisterRequest {
   email: string;
   username: string;
   password: string;
+  isUploader?: boolean;
+}
+
+export interface GoogleLoginRequest {
+  idToken: string;
+}
+
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
 }

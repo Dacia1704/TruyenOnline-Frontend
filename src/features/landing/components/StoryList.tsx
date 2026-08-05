@@ -32,7 +32,7 @@ export function StoryList() {
       setLoading(true);
       setError(null);
       try {
-        const result = await getStories({ isPublished: true, size: 12, page });
+        const result = await getStories({ isPublished: true, size: 12, page, sortType: "NEWEST" });
         setStories(result.data ?? []);
         setTotalPages(result.totalPages);
         setTotalElements(result.totalElements);
@@ -72,18 +72,18 @@ export function StoryList() {
   };
 
   return (
-    <section className="pb-4 pt-12 px-6 bg-background dark:bg-slate-900/50">
+    <section className="pb-4 pt-8 px-6 bg-background dark:bg-slate-900/50">
       <div className="mx-auto max-w-6xl">
-        <div className="flex items-end justify-between mb-10">
+        <div className="flex items-end justify-between mb-6">
           <div>
-            <h2 className="text-3xl font-bold text-foreground dark:text-white">Truyện nổi bật</h2>
-            <p className="mt-2 text-muted-foreground dark:text-slate-400">
-              Những bộ truyện được yêu thích nhất trong thời gian qua.
+            <h2 className="text-2xl sm:text-3xl font-bold text-foreground dark:text-white">Truyện mới</h2>
+            <p className="mt-1 text-sm text-muted-foreground dark:text-slate-400">
+              Những bộ truyện mới nhất trên nền tảng.
             </p>
           </div>
           <Link
             href="/stories"
-            className="hidden sm:inline-flex items-center gap-2 rounded-lg border border-border dark:border-white/20 bg-background dark:bg-white/5 px-4 py-2 text-sm font-medium text-foreground dark:text-white/80 transition hover:bg-muted dark:hover:bg-white/10 hover:text-foreground dark:hover:text-white"
+            className="inline-flex items-center gap-2 rounded-lg border border-border dark:border-white/20 bg-background dark:bg-white/5 px-4 py-2 text-sm font-medium text-foreground dark:text-white/80 transition hover:bg-muted dark:hover:bg-white/10 hover:text-foreground dark:hover:text-white"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
@@ -98,15 +98,15 @@ export function StoryList() {
           </div>
         )}
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
           {loading &&
-            Array.from({ length: 4 }).map((_, index) => (
+            Array.from({ length: 8 }).map((_, index) => (
               <div
                 key={index}
-                className="rounded-2xl border border-border dark:border-white/10 bg-card dark:bg-slate-800/50 overflow-hidden"
+                className="rounded-xl border border-border dark:border-white/10 bg-card dark:bg-slate-800/50 overflow-hidden"
               >
                 <div className="h-48 bg-muted dark:bg-slate-700 animate-pulse" />
-                <div className="p-4 space-y-3">
+                <div className="p-3 space-y-2">
                   <div className="h-4 bg-muted dark:bg-slate-700 rounded animate-pulse" />
                   <div className="h-3 bg-muted dark:bg-slate-700 rounded w-2/3 animate-pulse" />
                 </div>
@@ -118,39 +118,42 @@ export function StoryList() {
               <Link
                 key={story.id}
                 href={`/stories/${story.slug}`}
-                className="group rounded-2xl border border-border dark:border-white/10 bg-card dark:bg-slate-800/50 overflow-hidden transition-all duration-300 hover:border-indigo-500/50 dark:hover:border-indigo-500/50 hover:shadow-xl dark:hover:shadow-indigo-500/10 hover:-translate-y-1"
+                className="group rounded-xl border border-border dark:border-white/10 bg-card dark:bg-slate-800/50 overflow-hidden transition-all duration-300 hover:border-indigo-500/50 dark:hover:border-indigo-500/50 hover:shadow-lg dark:hover:shadow-indigo-500/10 hover:-translate-y-0.5"
               >
                 {story.coverImageUrl ? (
                   <img src={story.coverImageUrl} alt={story.title} className="h-48 w-full object-cover" />
                 ) : (
                   <div className="h-48 bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center">
-                    <svg className="w-10 h-10 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
+                    <img
+                      src="/images/icon/main.png"
+                      alt="placeholder"
+                      className="w-12 h-12 object-contain opacity-50"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.5}
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
                   </div>
                 )}
-                <div className="p-4">
-                  <h3 className="font-semibold text-foreground dark:text-white group-hover:text-indigo-400 dark:group-hover:text-indigo-400 transition line-clamp-1">
+                <div className="p-3">
+                  <h3 className="font-semibold text-sm text-foreground dark:text-white group-hover:text-indigo-400 dark:group-hover:text-indigo-400 transition line-clamp-1">
                     {story.title}
                   </h3>
-                  <p className="mt-1 text-xs text-muted-foreground">
+                  <p className="mt-0.5 text-xs text-muted-foreground">
                     {storyTypeLabel[story.storyType] ?? story.storyType}
                   </p>
-                  <div className="mt-3 flex items-center justify-between">
+                  <div className="mt-2 flex items-center justify-between">
                     <span
-                      className={`rounded-full px-3 py-1 text-xs font-medium ${
+                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                         statusConfig[story.status]?.className ??
                         "bg-muted dark:bg-slate-700 text-foreground dark:text-slate-300"
                       }`}
                     >
                       {statusConfig[story.status]?.text ?? story.status}
                     </span>
-                    <span className="text-xs text-muted-foreground">{story.viewCount.toLocaleString()} lượt xem</span>
+                    <span className="text-xs text-muted-foreground">{story.viewCount.toLocaleString()} lượt</span>
                   </div>
                 </div>
               </Link>
@@ -158,7 +161,7 @@ export function StoryList() {
         </div>
 
         {!loading && totalPages > 1 && (
-          <div className="mt-10 flex items-center justify-center gap-2">
+          <div className="mt-8 flex items-center justify-center gap-2">
             <button
               onClick={() => goToPage(page - 1)}
               disabled={page === 1}

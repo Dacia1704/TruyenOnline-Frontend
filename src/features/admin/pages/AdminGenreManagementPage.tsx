@@ -102,7 +102,7 @@ export default function AdminGenreManagementPage() {
 
   return (
     <AdminLayout>
-      <div>
+      <div className="-mx-4 lg:mx-0 px-4 lg:px-0">
         <h1 className="text-2xl font-bold">Quản lý thể loại</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Thêm, chỉnh sửa và xóa thể loại truyện. Thể loại sẽ được sử dụng khi tạo truyện.
@@ -110,15 +110,15 @@ export default function AdminGenreManagementPage() {
       </div>
 
       {error && (
-        <div className="mt-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">{error}</div>
+        <div className="mt-4 lg:mt-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">{error}</div>
       )}
       {success && (
-        <div className="mt-6 rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-700">
+        <div className="mt-4 lg:mt-6 rounded-lg bg-emerald-50 border border-emerald-200 px-4 py-3 text-sm text-emerald-700">
           {success}
         </div>
       )}
 
-      <section className="mt-8 rounded-2xl border border-border bg-card p-6">
+      <section className="mt-4 lg:mt-8 rounded-2xl border border-border bg-card p-4 lg:p-6">
         <h2 className="text-lg font-semibold">Thêm thể loại mới</h2>
         <form className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end" onSubmit={handleCreate}>
           <div className="flex-1">
@@ -141,9 +141,9 @@ export default function AdminGenreManagementPage() {
         </form>
       </section>
 
-      <div className="mt-8 rounded-2xl border border-border overflow-hidden">
+      <div className="mt-4 lg:mt-8 rounded-2xl border border-border overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm min-w-[600px]">
             <thead className="bg-muted">
               <tr>
                 <th className="px-4 py-3 text-left font-medium">ID</th>

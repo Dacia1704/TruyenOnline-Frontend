@@ -4,6 +4,7 @@ import { PageLayout } from "@/components/PageLayout";
 import { CommentsList } from "@/components/CommentsList";
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { getStory, getChaptersBySlug, getBookmark, createBookmark, deleteBookmark, getReadingHistory, createOrUpdateReadingHistory, getComments, createComment } from "@/lib/api/stories";
 import { getUserInfo } from "@/lib/api/client";
@@ -15,6 +16,20 @@ const storyTypeLabel: Record<string, string> = {
   MANHWA: "Manhwa",
   MANHUA: "Manhua",
   NOVEL: "Light novel",
+};
+
+const roleLabel: Record<string, string> = {
+  AUTHOR: "Tác giả",
+  CO_AUTHOR: "Đồng tác giả",
+  ILLUSTRATOR: "Họa sĩ",
+  TRANSLATOR: "Dịch giả",
+};
+
+const roleBadgeClass: Record<string, string> = {
+  AUTHOR: "bg-indigo-500/20 text-indigo-400",
+  CO_AUTHOR: "bg-amber-500/20 text-amber-400",
+  ILLUSTRATOR: "bg-emerald-500/20 text-emerald-400",
+  TRANSLATOR: "bg-sky-500/20 text-sky-400",
 };
 
 const statusConfig: Record<string, { text: string; className: string }> = {
@@ -206,9 +221,7 @@ export default function StoryDetailPage() {
                 />
               ) : (
                 <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center">
-                  <svg className="w-12 h-12 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
+                  <img src="/images/icon/main.png" alt="placeholder" className="w-16 h-16 object-contain opacity-50" />
                 </div>
               )}
             </div>
@@ -226,21 +239,48 @@ export default function StoryDetailPage() {
 
             <h1 className="mt-4 text-3xl font-bold text-foreground">{story.title}</h1>
 
-            {story.uploader && (
-              <p className="mt-2 text-sm text-muted-foreground">
-                Tác giả: <span className="text-foreground">{story.uploader.username}</span>
-              </p>
-            )}
-
             <div className="mt-4 flex items-center gap-4 text-sm text-muted-foreground">
               <span>{story.viewCount?.toLocaleString() ?? 0} lượt xem</span>
               <span>{chapters.length} chương</span>
             </div>
 
-            {story.description && (
-              <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-                {story.description}
-              </p>
+            {story.authors && story.authors.length > 0 && (
+              <div className="mt-4">
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">Tác giả</h3>
+                <div className="flex flex-wrap gap-3">
+                  {story.authors.map((storyAuthor) => (
+                    <Link
+                      key={storyAuthor.author.id}
+                      href={storyAuthor.author.slug ? `/authors/${storyAuthor.author.slug}` : "#"}
+                      onClick={(e) => {
+                        if (!storyAuthor.author.slug) e.preventDefault();
+                      }}
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-card border border-border hover:border-indigo-500/50 transition"
+                    >
+                      {storyAuthor.author.avatarUrl ? (
+                        <div className="relative w-8 h-8 rounded-full overflow-hidden">
+                          <Image
+                            src={storyAuthor.author.avatarUrl}
+                            alt={storyAuthor.author.name}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-xs font-bold text-white">
+                          {storyAuthor.author.name.slice(0, 2).toUpperCase()}
+                        </div>
+                      )}
+                      <div>
+                        <span className="text-sm font-medium text-foreground">{storyAuthor.author.name}</span>
+                        <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${roleBadgeClass[storyAuthor.role] ?? "bg-muted"}`}>
+                          {roleLabel[storyAuthor.role] ?? storyAuthor.role}
+                        </span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
             )}
 
             <div className="mt-6 flex flex-wrap gap-3">
@@ -275,6 +315,15 @@ export default function StoryDetailPage() {
           </div>
         </div>
 
+        {story.description && (
+          <div className="mt-8 p-6 rounded-xl border border-border bg-card">
+            <h2 className="text-lg font-semibold text-foreground mb-3">Giới thiệu</h2>
+            <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-wrap">
+              {story.description}
+            </p>
+          </div>
+        )}
+
         <div className="mt-10">
           <h2 className="text-xl font-bold text-foreground">Danh sách chương</h2>
 
@@ -305,7 +354,7 @@ export default function StoryDetailPage() {
           )}
         </div>
 
-        {/* Comments Section */}
+          {/* Comments Section */}
         <div className="mt-12 pt-6 border-t border-border">
           <h3 className="text-lg font-bold mb-4 text-foreground">Bình luận ({comments.length})</h3>
 
@@ -343,6 +392,7 @@ export default function StoryDetailPage() {
             <CommentsList
               comments={comments}
               storyId={story.id}
+              storyUploaderId={story.uploader?.id}
               onReload={loadComments}
             />
           )}

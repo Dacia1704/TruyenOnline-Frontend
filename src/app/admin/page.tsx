@@ -1,5 +1,5 @@
-import { AdminDashboardPage } from "@/features/admin";
+import { redirect } from "next/navigation";
 
 export default function AdminDashboardRoute() {
-  return <AdminDashboardPage />;
+  redirect("/admin/users");
 }

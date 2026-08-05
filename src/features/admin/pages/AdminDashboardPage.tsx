@@ -28,7 +28,7 @@ export default function AdminDashboardPage() {
 
   return (
     <AdminLayout>
-      <div>
+      <div className="-mx-4 lg:mx-0 px-4 lg:px-0">
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Tổng quan hoạt động của hệ thống.
@@ -36,12 +36,12 @@ export default function AdminDashboardPage() {
       </div>
 
       {error && (
-        <div className="mt-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
+        <div className="mt-4 lg:mt-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">
           {error}
         </div>
       )}
 
-      <div className="mt-8 grid sm:grid-cols-3 gap-4">
+      <div className="mt-4 lg:mt-8 grid sm:grid-cols-3 gap-4">
         {cards.map((item) => (
           <div key={item.title} className="rounded-2xl border border-border bg-card p-5">
             <p className="text-sm text-muted-foreground">{item.title}</p>
