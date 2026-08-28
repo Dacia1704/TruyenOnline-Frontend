@@ -9,7 +9,7 @@ import {
   deletePublishRequest,
   getMyInfo,
   getMyPublishRequests,
-  getStories,
+  getStoriesAdmin,
   requestPublish,
   getModerationActionById,
   createBanAppeal,
@@ -67,6 +67,7 @@ export default function StoryListPage() {
   } | null>(null);
   const [showAppealForm, setShowAppealForm] = useState(false);
   const [appealContent, setAppealContent] = useState("");
+  const [appealAttachments, setAppealAttachments] = useState<File[]>([]);
   const [submittingAppeal, setSubmittingAppeal] = useState(false);
 
   // Map of storyId -> PublishRequestInfo (for non-published stories)
@@ -81,9 +82,9 @@ export default function StoryListPage() {
       setLoading(true);
       setError(null);
       try {
-        const [myInfo, result, requests] = await Promise.all([
-          getMyInfo(),
-          getStories({ size: 50 }),
+        const myInfo = await getMyInfo();
+        const [result, requests] = await Promise.all([
+          getStoriesAdmin({ size: 50, uploaderId: myInfo.id }),
           getMyPublishRequests({ size: 100 }),
         ]);
         setStories(result.data ?? []);
@@ -186,7 +187,7 @@ export default function StoryListPage() {
 
       // If the story was updated to published, refresh stories
       const requests = await getMyPublishRequests({ size: 100 });
-      const result = await getStories({ size: 50 });
+      const result = await getStoriesAdmin({ size: 50, uploaderId: localStorage.getItem("uploader_profile_id") ?? undefined });
       setStories(result.data ?? []);
 
       const requestMap = new Map<string, PublishRequestInfo>();
@@ -248,10 +249,11 @@ export default function StoryListPage() {
     if (!banReasonModal?.moderationAction || !appealContent.trim()) return;
     setSubmittingAppeal(true);
     try {
-      await createBanAppeal(banReasonModal.moderationAction.id, appealContent.trim());
+      await createBanAppeal(banReasonModal.moderationAction.id, appealContent.trim(), appealAttachments.length > 0 ? appealAttachments : undefined);
       toast.success("Đã gửi khiếu nại thành công");
       setShowAppealForm(false);
       setAppealContent("");
+      setAppealAttachments([]);
       setBanReasonModal(null);
     } catch {
       toast.error("Không thể gửi khiếu nại");
@@ -522,12 +524,67 @@ export default function StoryListPage() {
                       rows={4}
                     />
                   </div>
+
+                  {/* File Upload */}
+                  <div>
+                    <label className="block text-sm font-medium text-muted-foreground mb-1">Ảnh đính kèm (tùy chọn)</label>
+                    <div className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-indigo-400 transition cursor-pointer"
+                      onClick={() => document.getElementById("appeal-attachments")?.click()}
+                    >
+                      <input
+                        id="appeal-attachments"
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => {
+                          const files = Array.from(e.target.files || []);
+                          setAppealAttachments((prev) => [...prev, ...files]);
+                        }}
+                      />
+                      <svg className="mx-auto h-8 w-8 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                      <p className="mt-2 text-sm text-muted-foreground">Nhấn để chọn ảnh hoặc kéo thả</p>
+                      <p className="text-xs text-muted-foreground/70">PNG, JPG, GIF (tối đa 5MB/ảnh)</p>
+                    </div>
+
+                    {/* Preview selected files */}
+                    {appealAttachments.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        {appealAttachments.map((file, index) => (
+                          <div key={index} className="flex items-center justify-between bg-muted rounded-lg px-3 py-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <svg className="h-4 w-4 text-muted-foreground flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                              </svg>
+                              <span className="text-sm text-foreground truncate">{file.name}</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setAppealAttachments((prev) => prev.filter((_, i) => i !== index));
+                              }}
+                              className="p-1 hover:bg-rose-100 rounded transition flex-shrink-0"
+                            >
+                              <svg className="h-4 w-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
                   <div className="flex gap-2">
                     <button
                       type="button"
                       onClick={() => {
                         setShowAppealForm(false);
                         setAppealContent("");
+                        setAppealAttachments([]);
                       }}
                       className="flex-1 rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted transition"
                     >
@@ -553,6 +610,7 @@ export default function StoryListPage() {
                   setBanReasonModal(null);
                   setShowAppealForm(false);
                   setAppealContent("");
+                  setAppealAttachments([]);
                 }}
                 className="w-full rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted transition"
               >

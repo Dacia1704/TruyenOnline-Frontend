@@ -205,25 +205,31 @@ export default function StoryFormPage({ storyId }: StoryFormPageProps) {
     setResult(null);
 
     try {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const payload = {
-    title: form.title.trim(),
-    description: form.description.trim() || undefined,
-    coverImageUrl: form.coverImageUrl.trim() || undefined,
-    storyType: form.storyType,
-    status: form.status,
-    isPublished: false,
-    freeChapterLimit:
-      form.freeChapterLimit === "" || form.freeChapterLimit === null ? null : Number(form.freeChapterLimit),
-    coverImageFile: form.coverImageFile,
-  } as any;
+      if (selectedGenres.length === 0) {
+        setError("Vui lòng chọn ít nhất một thể loại.");
+        setSubmitting(false);
+        return;
+      }
+
+      const payload = {
+        title: form.title.trim(),
+        description: form.description.trim() || undefined,
+        coverImageUrl: form.coverImageUrl.trim() || undefined,
+        storyType: form.storyType,
+        status: form.status,
+        isPublished: false,
+        freeChapterLimit:
+          form.freeChapterLimit === "" || form.freeChapterLimit === null ? null : Number(form.freeChapterLimit),
+        coverImageFile: form.coverImageFile,
+        genreIds: selectedGenres,
+      };
 
       let saved: Story;
       if (storyId) {
         saved = await updateStory(storyId, payload);
         setResult("Cập nhật truyện thành công.");
       } else {
-        saved = await createStory(payload);
+        saved = await createStory(payload as Parameters<typeof createStory>[0]);
         setResult("Tạo truyện thành công.");
       }
 
@@ -265,12 +271,12 @@ export default function StoryFormPage({ storyId }: StoryFormPageProps) {
 
   return (
     <UploaderLayout>
-      <div className="max-w-2xl">
+      <div className="max-w-2xl mx-auto">
         <h1 className="text-2xl font-bold">{isEdit ? "Chỉnh sửa truyện" : "Tạo truyện mới"}</h1>
         <p className="mt-1 text-sm text-muted-foreground">Điền thông tin bộ truyện trước khi thêm chương.</p>
       </div>
 
-      <form className="mt-8 max-w-2xl space-y-5" onSubmit={handleFormSubmit}>
+      <form className="mt-8 max-w-2xl mx-auto space-y-5" onSubmit={handleFormSubmit}>
         <div>
           <label className="block text-sm font-medium">Tiêu đề</label>
           <input
@@ -304,8 +310,6 @@ export default function StoryFormPage({ storyId }: StoryFormPageProps) {
             >
               <option value="NOVEL">Light novel</option>
               <option value="COMICS">Truyện tranh</option>
-              <option value="MANHWA">Manhwa</option>
-              <option value="MANHUA">Manhua</option>
             </select>
           </div>
           <div>

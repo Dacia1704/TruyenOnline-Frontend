@@ -84,14 +84,17 @@ export async function getMyTransactions(): Promise<Transaction[]> {
   return data.data ?? [];
 }
 
-export async function getTransactions(page: number = 1, size: number = 10, userId?: string): Promise<PageResponse<Transaction>> {
+export async function getTransactions(
+  page: number = 1,
+  size: number = 10,
+  userId?: string,
+): Promise<PageResponse<Transaction>> {
   const params: Record<string, string | number> = { page, size };
   if (userId) params.userId = userId;
 
-  const { data } = await apiClient.get<{ code: number; data: PageResponse<Transaction> }>(
-    "/api/payment/transactions",
-    { params },
-  );
+  const { data } = await apiClient.get<{ code: number; data: PageResponse<Transaction> }>("/api/payment/transactions", {
+    params,
+  });
   return data.data;
 }
 

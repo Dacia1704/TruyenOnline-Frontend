@@ -24,7 +24,7 @@ export async function unbanUser(userId: string, reason?: string) {
   return data.data;
 }
 
-export async function updateUserRoles(userId: string, roleIds: number[]) {
+export async function updateUserRoles(userId: string, roleIds: string[]) {
   const { data } = await apiClient.post<{ code: number; data: User }>(`/api/users/${userId}/roles`, {
     roles: roleIds,
   });
@@ -33,14 +33,9 @@ export async function updateUserRoles(userId: string, roleIds: number[]) {
 
 // ============ Roles ============
 
-export const ROLES = [
-  { id: 1, name: "USER", description: "Người dùng thông thường" },
-  { id: 2, name: "UPLOADER", description: "Người đăng nội dung" },
-  { id: 3, name: "ADMIN", description: "Quản trị viên" },
-];
-
-export function getRoles() {
-  return Promise.resolve(ROLES);
+export async function getRoles() {
+  const { data } = await apiClient.get<{ code: number; data: Role[] }>("/api/users/roles");
+  return data.data;
 }
 
 // ============ Genres ============
@@ -82,13 +77,16 @@ export interface Author {
 }
 
 export async function getAuthors(params?: { page?: number; size?: number; search?: string }) {
-  const { data } = await apiClient.get<{ code: number; data: {
-    currentPage: number;
-    pageSize: number;
-    totalPages: number;
-    totalElements: number;
-    data: Author[];
-  }}>("/api/authors", {
+  const { data } = await apiClient.get<{
+    code: number;
+    data: {
+      currentPage: number;
+      pageSize: number;
+      totalPages: number;
+      totalElements: number;
+      data: Author[];
+    };
+  }>("/api/authors", {
     params: {
       page: params?.page ?? 1,
       size: params?.size ?? 20,
@@ -98,12 +96,7 @@ export async function getAuthors(params?: { page?: number; size?: number; search
   return data.data;
 }
 
-export async function createAuthor(payload: {
-  name: string;
-  bio?: string;
-  country?: string;
-  avatarFile?: File;
-}) {
+export async function createAuthor(payload: { name: string; bio?: string; country?: string; avatarFile?: File }) {
   const formData = new FormData();
   formData.append("name", payload.name);
   if (payload.bio) formData.append("bio", payload.bio);
@@ -116,12 +109,15 @@ export async function createAuthor(payload: {
   return data.data;
 }
 
-export async function updateAuthor(id: string, payload: {
-  name?: string;
-  bio?: string;
-  country?: string;
-  avatarFile?: File;
-}) {
+export async function updateAuthor(
+  id: string,
+  payload: {
+    name?: string;
+    bio?: string;
+    country?: string;
+    avatarFile?: File;
+  },
+) {
   const formData = new FormData();
   if (payload.name) formData.append("name", payload.name);
   if (payload.bio !== undefined) formData.append("bio", payload.bio);

@@ -31,13 +31,16 @@ export async function getBannerById(id: string): Promise<Banner | null> {
 }
 
 export async function getAllBanners(params?: { page?: number; size?: number; isActive?: boolean }) {
-  const { data } = await apiClient.get<{ code: number; data: {
-    currentPage: number;
-    pageSize: number;
-    totalPages: number;
-    totalElements: number;
-    data: Banner[];
-  }}>("/api/banners", {
+  const { data } = await apiClient.get<{
+    code: number;
+    data: {
+      currentPage: number;
+      pageSize: number;
+      totalPages: number;
+      totalElements: number;
+      data: Banner[];
+    };
+  }>("/api/banners", {
     params: {
       page: params?.page ?? 1,
       size: params?.size ?? 20,
@@ -69,14 +72,17 @@ export async function createBanner(payload: {
   return data.data;
 }
 
-export async function updateBanner(id: string, payload: {
-  title: string;
-  linkUrl?: string;
-  bannerUrl?: string;
-  imageFile?: File;
-  position: "HOME_HERO" | "POPUP";
-  sortOrder: number;
-}) {
+export async function updateBanner(
+  id: string,
+  payload: {
+    title: string;
+    linkUrl?: string;
+    bannerUrl?: string;
+    imageFile?: File;
+    position: "HOME_HERO" | "POPUP";
+    sortOrder: number;
+  },
+) {
   const formData = new FormData();
   formData.append("title", payload.title);
   if (payload.linkUrl) formData.append("linkUrl", payload.linkUrl);

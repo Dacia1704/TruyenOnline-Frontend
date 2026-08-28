@@ -48,15 +48,17 @@ export function Hero() {
     setCurrentIndex(index);
   };
 
-  const scrollToFeatured = () => {
-    document.getElementById("featured-stories")?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  const handleBannerClick = (banner: Banner) => {
-    if (banner.linkUrl) {
-      window.open(banner.linkUrl, banner.linkUrl.startsWith("http") ? "_blank" : "_self");
-    }
-  };
+  useEffect(() => {
+    const handleScroll = () => {
+      const heroHeight = window.innerHeight * 0.8;
+      if (window.scrollY > 50) {
+        window.scrollTo({ top: heroHeight, behavior: "smooth" });
+        window.removeEventListener("scroll", handleScroll);
+      }
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
     <section className="relative">
@@ -77,10 +79,7 @@ export function Hero() {
                 index === currentIndex ? "opacity-100 z-10" : "opacity-0 z-0"
               }`}
             >
-              <div
-                onClick={() => handleBannerClick(banner)}
-                className="w-full h-full cursor-pointer"
-              >
+              <div className="w-full h-full cursor-pointer">
                 <img
                   src={banner.bannerUrl}
                   alt={banner.title}
@@ -105,7 +104,7 @@ export function Hero() {
           </p>
           <div className="mt-8 flex flex-col sm:flex-row items-center gap-3">
             <button
-              onClick={scrollToFeatured}
+              onClick={() => window.scrollTo({ top: window.innerHeight * 0.8, behavior: "smooth" })}
               className="w-full sm:w-auto rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 px-8 py-3.5 text-sm font-semibold text-white shadow-2xl shadow-indigo-500/40 transition hover:scale-105 hover:shadow-indigo-500/60 cursor-pointer"
             >
               Khám phá ngay

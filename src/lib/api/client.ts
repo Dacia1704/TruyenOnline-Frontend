@@ -91,9 +91,9 @@ apiClient.interceptors.response.use(
       if (typeof window !== "undefined") {
         const refreshToken = localStorage.getItem("refreshToken");
 
+        // Không có refresh token = khách (guest), không redirect về login
+        // Chỉ cần hiển thị lỗi, các API công khai không yêu cầu login
         if (!refreshToken) {
-          clearTokens();
-          window.location.href = "/login";
           return Promise.reject(error);
         }
 

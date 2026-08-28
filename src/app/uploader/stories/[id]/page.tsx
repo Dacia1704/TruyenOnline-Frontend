@@ -3,8 +3,9 @@
 import { UploaderLayout } from "@/features/uploader/components/UploaderLayout";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { getStory, getChaptersBySlug, getChapter, getChapterPages, getMyInfo, deleteStory } from "@/lib/api/stories";
+import { getStoryById, getChapters, getChapter, getChapterPages, getMyInfo, deleteStory, getModerationActionById, createBanAppeal } from "@/lib/api/stories";
 import type { Story, Chapter, ChapterPage } from "@/lib/types/stories";
+import type { ModerationAction } from "@/lib/api/stories";
 import { toast } from "sonner";
 
 const storyTypeLabel: Record<string, string> = {
@@ -22,9 +23,9 @@ const statusConfig: Record<string, { text: string; className: string }> = {
 };
 
 export default function UploaderStoryDetailPage() {
-  const params = useParams<{ slug?: string }>();
+  const params = useParams<{ id?: string }>();
   const router = useRouter();
-  const slug = params?.slug;
+  const storyId = params?.id;
 
   const [story, setStory] = useState<Story | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
@@ -41,8 +42,17 @@ export default function UploaderStoryDetailPage() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
+  const [showBanModal, setShowBanModal] = useState(false);
+  const [banReason, setBanReason] = useState<ModerationAction | null>(null);
+  const [loadingBanReason, setLoadingBanReason] = useState(false);
+
+  const [showAppealModal, setShowAppealModal] = useState(false);
+  const [appealContent, setAppealContent] = useState("");
+  const [appealFiles, setAppealFiles] = useState<File[]>([]);
+  const [submittingAppeal, setSubmittingAppeal] = useState(false);
+
   useEffect(() => {
-    if (!slug || Array.isArray(slug)) return;
+    if (!storyId) return;
 
     const load = async () => {
       setLoading(true);
@@ -50,8 +60,8 @@ export default function UploaderStoryDetailPage() {
       try {
         const myInfo = await getMyInfo();
         const [storyData, chaptersData] = await Promise.all([
-          getStory(slug),
-          getChaptersBySlug(slug, { size: 100 }),
+          getStoryById(storyId),
+          getChapters(storyId, { size: 100 }),
         ]);
         if (storyData.uploader?.id !== myInfo.id) {
           setError("Bạn không có quyền xem truyện này.");
@@ -66,7 +76,7 @@ export default function UploaderStoryDetailPage() {
       }
     };
     load();
-  }, [slug]);
+  }, [storyId]);
 
   const filteredChapters = chapters.filter((c) =>
     searchChapter === "" || c.title?.toLowerCase().includes(searchChapter.toLowerCase()) ||
@@ -109,6 +119,35 @@ export default function UploaderStoryDetailPage() {
       router.push("/uploader/stories");
     } catch {
       toast.error("Không thể xóa truyện.");
+    }
+  };
+
+  const handleViewBanReason = async () => {
+    if (!story?.id) return;
+    setShowBanModal(true);
+    setLoadingBanReason(true);
+    setBanReason(null);
+    try {
+      const action = await getModerationActionById(story.id);
+      setBanReason(action);
+    } catch {
+      toast.error("Không tải được lý do ban.");
+    } finally {
+      setLoadingBanReason(false);
+    }
+  };
+
+  const handleViewChapterBanReason = async (chapterId: string) => {
+    setShowBanModal(true);
+    setLoadingBanReason(true);
+    setBanReason(null);
+    try {
+      const action = await getModerationActionById(chapterId);
+      setBanReason(action);
+    } catch {
+      toast.error("Không tải được lý do ban.");
+    } finally {
+      setLoadingBanReason(false);
     }
   };
 
@@ -173,7 +212,15 @@ export default function UploaderStoryDetailPage() {
                   {storyTypeLabel[story.storyType] ?? story.storyType}
                 </span>
                 {story.isBanned && (
-                  <span className="rounded-full bg-red-500/20 text-red-400 px-3 py-1 text-xs font-medium">Bị ban</span>
+                  <>
+                    <span className="rounded-full bg-red-500/20 text-red-400 px-3 py-1 text-xs font-medium">Bị ban</span>
+                    <button
+                      onClick={handleViewBanReason}
+                      className="rounded-full border border-red-200 bg-red-50 text-red-700 px-3 py-1 text-xs font-medium hover:bg-red-100 transition"
+                    >
+                      Xem lý do
+                    </button>
+                  </>
                 )}
               </div>
               <h1 className="text-3xl font-bold text-foreground">{story.title}</h1>
@@ -185,6 +232,7 @@ export default function UploaderStoryDetailPage() {
                 <p>Lượt xem: <span className="text-foreground">{story.viewCount?.toLocaleString() ?? 0}</span></p>
                 <p>Lượt theo dõi: <span className="text-foreground">{story.followCount?.toLocaleString() ?? 0}</span></p>
                 <p>Số chương: <span className="text-foreground">{chapters.length}</span></p>
+                {story.freeChapterLimit ? <p>Số chương miễn phí: <span className="text-foreground">{story.freeChapterLimit}</span></p> : null}
               </div>
 
               <div className="mt-4 flex flex-wrap gap-2">
@@ -274,7 +322,7 @@ export default function UploaderStoryDetailPage() {
                   </span>
                 </div>
                 <button
-                  onClick={() => router.push(`/uploader/stories/${slug}/chapters`)}
+                  onClick={() => router.push(`/uploader/stories/${story.id}/chapters`)}
                   className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium transition hover:bg-muted whitespace-nowrap"
                 >
                   Quản lý chương
@@ -300,8 +348,19 @@ export default function UploaderStoryDetailPage() {
                             {chapter.title && (
                               <span className="text-sm text-muted-foreground truncate">{chapter.title}</span>
                             )}
-                            {!chapter.isPublished && (
+                            {!chapter.isPublished && !chapter.isBanned && (
                               <span className="shrink-0 rounded-full bg-gray-100 text-gray-500 px-2 py-0.5 text-xs">Bản nháp</span>
+                            )}
+                            {chapter.isBanned && (
+                              <>
+                                <span className="shrink-0 rounded-full bg-red-100 text-red-700 px-2 py-0.5 text-xs">Bị ban</span>
+                                <button
+                                  onClick={() => handleViewChapterBanReason(chapter.id)}
+                                  className="shrink-0 rounded-full border border-red-200 bg-red-50 text-red-700 px-2 py-0.5 text-xs hover:bg-red-100 transition"
+                                >
+                                  Xem lý do
+                                </button>
+                              </>
                             )}
                           </div>
                         </div>
@@ -316,7 +375,7 @@ export default function UploaderStoryDetailPage() {
                             Xem demo
                           </button>
                           <button
-                            onClick={() => router.push(`/uploader/stories/${slug}/chapters/${chapter.id}/content`)}
+                            onClick={() => router.push(`/uploader/stories/${story.id}/chapters/${chapter.id}/content`)}
                             className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700"
                           >
                             Nội dung
@@ -402,6 +461,169 @@ export default function UploaderStoryDetailPage() {
                   ))}
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Ban Reason Modal */}
+      {showBanModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowBanModal(false)}>
+          <div
+            className="w-full max-w-md rounded-2xl border border-border bg-background p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold mb-4">Lý do ban</h3>
+            {loadingBanReason ? (
+              <div className="text-center py-4">
+                <div className="inline-block w-6 h-6 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : banReason ? (
+              <div className="space-y-3">
+                <div>
+                  <p className="text-sm text-muted-foreground">Loại vi phạm</p>
+                  <p className="font-medium">{banReason.violationType ?? "Không xác định"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Lý do</p>
+                  <p className="font-medium">{banReason.reason ?? "Không có"}</p>
+                </div>
+                {banReason.adminUsername && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Người thực hiện</p>
+                    <p className="font-medium">{banReason.adminUsername}</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-muted-foreground">Không tìm thấy lý do ban.</p>
+            )}
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                onClick={() => setShowBanModal(false)}
+                className="rounded-lg border border-border px-4 py-2 text-sm font-medium transition hover:bg-muted"
+              >
+                Đóng
+              </button>
+              {banReason && (
+                <button
+                  onClick={() => { setShowBanModal(false); setShowAppealModal(true); }}
+                  className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-600"
+                >
+                  Khiếu nại
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Appeal Modal */}
+      {showAppealModal && banReason && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50" onClick={() => setShowAppealModal(false)}>
+          <div
+            className="w-full max-w-lg rounded-2xl border border-border bg-background p-6 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold mb-4">Khiếu nại lý do ban</h3>
+            <div className="mb-4 p-3 rounded-lg bg-muted text-sm">
+              <p className="font-medium mb-1">Loại vi phạm:</p>
+              <p className="text-muted-foreground">{banReason.violationType ?? "Không xác định"}</p>
+              <p className="font-medium mb-1 mt-2">Lý do:</p>
+              <p className="text-muted-foreground">{banReason.reason ?? "Không có"}</p>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">Nội dung khiếu nại</label>
+              <textarea
+                value={appealContent}
+                onChange={(e) => setAppealContent(e.target.value)}
+                placeholder="Nhập nội dung khiếu nại của bạn..."
+                rows={5}
+                className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 resize-none"
+              />
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-2">File đính kèm (tùy chọn)</label>
+              <div className="border-2 border-dashed border-border rounded-lg p-4 text-center hover:border-indigo-400 transition cursor-pointer"
+                onClick={() => document.getElementById("appeal-file-input")?.click()}
+              >
+                <input
+                  id="appeal-file-input"
+                  type="file"
+                  multiple
+                  accept="image/*,.pdf,.doc,.docx"
+                  className="hidden"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files || []);
+                    setAppealFiles((prev) => [...prev, ...files]);
+                  }}
+                />
+                <svg className="w-8 h-8 mx-auto text-muted-foreground mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                </svg>
+                <p className="text-sm text-muted-foreground">Click để chọn file hoặc kéo thả file vào đây</p>
+                <p className="text-xs text-muted-foreground mt-1">Hỗ trợ: Ảnh, PDF, Word</p>
+              </div>
+              {appealFiles.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {appealFiles.map((file, index) => (
+                    <div key={index} className="flex items-center justify-between p-2 bg-muted rounded-lg text-sm">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <span className="truncate">{file.name}</span>
+                        <span className="text-xs text-muted-foreground shrink-0">({(file.size / 1024).toFixed(1)} KB)</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setAppealFiles((prev) => prev.filter((_, i) => i !== index));
+                        }}
+                        className="shrink-0 p-1 hover:bg-background rounded transition"
+                      >
+                        <svg className="w-4 h-4 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => { setShowAppealModal(false); setAppealContent(""); setAppealFiles([]); }}
+                className="rounded-lg border border-border px-4 py-2 text-sm font-medium transition hover:bg-muted"
+                disabled={submittingAppeal}
+              >
+                Hủy
+              </button>
+              <button
+                onClick={async () => {
+                  if (!appealContent.trim()) {
+                    toast.error("Vui lòng nhập nội dung khiếu nại.");
+                    return;
+                  }
+                  setSubmittingAppeal(true);
+                  try {
+                    await createBanAppeal(banReason.id, appealContent, appealFiles.length > 0 ? appealFiles : undefined);
+                    toast.success("Đã gửi khiếu nại thành công.");
+                    setShowAppealModal(false);
+                    setAppealContent("");
+                    setAppealFiles([]);
+                  } catch {
+                    toast.error("Không thể gửi khiếu nại.");
+                  } finally {
+                    setSubmittingAppeal(false);
+                  }
+                }}
+                disabled={submittingAppeal}
+                className="rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-600 disabled:opacity-50"
+              >
+                {submittingAppeal ? "Đang gửi..." : "Gửi khiếu nại"}
+              </button>
             </div>
           </div>
         </div>

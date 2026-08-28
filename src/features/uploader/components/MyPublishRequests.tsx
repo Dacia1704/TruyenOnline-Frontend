@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { UploaderLayout } from "./UploaderLayout";
 import { deletePublishRequest, getMyPublishRequests, type StoryPublishRequestStatus } from "@/lib/api/stories";
@@ -45,12 +46,24 @@ export function MyPublishRequests() {
 
   return (
     <UploaderLayout>
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold">Các yêu cầu xuất bản truyện</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Theo dõi trạng thái yêu cầu xuất bản của bạn.</p>
+      <div className="max-w-7xl mx-auto px-6">
+        <button
+          type="button"
+          onClick={() => router.push("/uploader/stories")}
+          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition mb-4"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+          </svg>
+          Quay lại
+        </button>
+
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold">Các yêu cầu xuất bản truyện</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Theo dõi trạng thái yêu cầu xuất bản của bạn.</p>
+          </div>
         </div>
-      </div>
 
       {error && (
         <div className="mt-6 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-600">{error}</div>
@@ -103,6 +116,7 @@ export function MyPublishRequests() {
               </div>
             </div>
           ))}
+      </div>
       </div>
 
       {revokeTarget && (

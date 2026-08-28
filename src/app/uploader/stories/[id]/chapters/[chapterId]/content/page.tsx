@@ -51,8 +51,9 @@ function EditorToolbar({ editor }: { editor: NonNullable<ReturnType<typeof useEd
 }
 
 export default function ChapterContentManagerPage() {
-  const params = useParams<{ slug?: string; chapterId?: string }>();
+  const params = useParams<{ id?: string; chapterId?: string }>();
   const router = useRouter();
+  const storyId = params?.id;
   const chapterId = params?.chapterId;
 
   const [loading, setLoading] = useState(true);
@@ -225,7 +226,7 @@ export default function ChapterContentManagerPage() {
         <div className="flex flex-col items-center gap-4 py-16">
           <p className="text-sm text-muted-foreground">Không tìm thấy chương.</p>
           <button
-            onClick={() => router.push(`/uploader/stories/${params?.slug}/chapters`)}
+            onClick={() => router.push(`/uploader/stories/${storyId}/chapters`)}
             className="rounded-lg border border-border px-4 py-2 text-sm font-medium transition hover:bg-muted"
           >
             Quay lại
@@ -246,7 +247,7 @@ export default function ChapterContentManagerPage() {
         </div>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => router.push(`/uploader/stories/${params?.slug}/chapters`)}
+            onClick={() => router.push(`/uploader/stories/${storyId}/chapters`)}
             className="rounded-lg border border-border px-4 py-2 text-sm font-medium transition hover:bg-muted"
           >
             Quay lại

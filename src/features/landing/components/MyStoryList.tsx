@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { getMyInfo, getStories } from "@/lib/api/stories";
+import { getMyInfo, getStoriesAdmin } from "@/lib/api/stories";
 import type { Story } from "@/lib/types/stories";
 
 const storyTypeLabel: Record<string, string> = {
@@ -30,7 +30,7 @@ export function MyStoryList() {
       setError(null);
       try {
         const myInfo = await getMyInfo();
-        const result = await getStories({ uploaderId: myInfo.id, size: 20 });
+        const result = await getStoriesAdmin({ uploaderId: myInfo.id, size: 20 });
         setStories(result.data ?? []);
       } catch {
         setError("Không tải được danh sách truyện của bạn.");
@@ -72,7 +72,7 @@ export function MyStoryList() {
           stories.map((story) => (
             <Link
               key={story.id}
-              href={`/uploader/stories/${story.slug}`}
+              href={`/uploader/stories/${story.id}`}
               className={`group rounded-2xl border overflow-hidden transition ${
                 story.isBanned
                   ? "border-red-300 dark:border-red-800 bg-red-50/50 dark:bg-red-950/30"

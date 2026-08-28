@@ -7,9 +7,8 @@ import { Footer } from "./components/Footer";
 import { Hero } from "./components/Hero";
 import { MyStoryList } from "./components/MyStoryList";
 import { Navbar } from "./components/Navbar";
-import { FeaturedStories } from "./components/FeaturedStories";
-import { NewUpdatedStories } from "./components/NewUpdatedStories";
-import { StoryList } from "./components/StoryList";
+import { FeaturedCarousel } from "./components/MostViewedCarousel";
+import { NewestStories } from "./components/NewestStories";
 
 export function LandingPage() {
   const pathname = usePathname();
@@ -31,9 +30,8 @@ export function LandingPage() {
       {view === "reader" ? (
         <main className="flex-1 pt-16">
           <Hero />
-          <FeaturedStories />
-          <NewUpdatedStories />
-          <StoryList />
+          <FeaturedCarousel />
+          <NewestStories />
         </main>
       ) : (
         <main className="flex-1 pt-20 py-10 px-6">

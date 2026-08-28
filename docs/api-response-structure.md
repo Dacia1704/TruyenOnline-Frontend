@@ -134,7 +134,56 @@
   "authors": [
     /* StoryAuthorResponse */
   ],
+  "genres": [
+    /* GenreResponse */
+  ],
   "isBanned": false
+}
+```
+
+### StoryCreateRequest
+
+```json
+{
+  "title": "string (required)",
+  "description": "string",
+  "coverImageUrl": "string",
+  "coverImageFile": "MultipartFile",
+  "storyType": "NOVEL | MANGA (required)",
+  "status": "ONGOING | COMPLETED | HIATUS | DROPPED (default: ONGOING)",
+  "freeChapterLimit": 5,
+  "authors": [
+    {
+      "authorId": "string",
+      "role": "AUTHOR | CO_AUTHOR | ILLUSTRATOR | TRANSLATOR",
+      "sortOrder": 1
+    }
+  ],
+  "genreIds": [1, 2, 3] (required, at least 1)
+}
+```
+
+### StoryUpdateRequest
+
+```json
+{
+  "title": "string",
+  "description": "string",
+  "coverImageUrl": "string",
+  "coverImageFile": "MultipartFile",
+  "storyType": "NOVEL | MANGA",
+  "status": "ONGOING | COMPLETED | HIATUS | DROPPED",
+  "isPublished": false,
+  "freeChapterLimit": 5,
+  "viewCount": 0,
+  "authors": [
+    {
+      "authorId": "string",
+      "role": "AUTHOR | CO_AUTHOR | ILLUSTRATOR | TRANSLATOR",
+      "sortOrder": 1
+    }
+  ],
+  "genreIds": [1, 2, 3]
 }
 ```
 

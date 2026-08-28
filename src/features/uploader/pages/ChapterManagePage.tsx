@@ -6,11 +6,11 @@ import { UploaderLayout } from "../components/UploaderLayout";
 import {
   createChapter,
   deleteChapter,
-  getChaptersBySlug,
+  getChapters,
   getChapter,
   getChapterPages,
   getMyInfo,
-  getStories,
+  getStoryById,
   updateChapter,
   updateChapterPublishStatus,
 } from "@/lib/api/stories";
@@ -20,9 +20,9 @@ import type { Story } from "@/lib/types/stories";
 type PublishStatus = "PUBLISH" | "DRAFT";
 
 export default function ChapterManagePage() {
-  const params = useParams<{ slug?: string }>();
+  const params = useParams<{ id?: string }>();
   const router = useRouter();
-  const slug = params?.slug;
+  const storyId = params?.id;
 
   const [loading, setLoading] = useState(false);
   const [savingChapter, setSavingChapter] = useState<string | null>(null);
@@ -48,25 +48,24 @@ export default function ChapterManagePage() {
   const [showPreview, setShowPreview] = useState(false);
 
   useEffect(() => {
-    if (!slug || Array.isArray(slug)) return;
+    if (!storyId) return;
 
     const fetch = async () => {
       setLoading(true);
       setError(null);
       try {
-        const [myInfo, storiesResult, chaptersResult] = await Promise.all([
+        const [myInfo, storyData, chaptersResult] = await Promise.all([
           getMyInfo(),
-          getStories({ size: 50 }),
-          getChaptersBySlug(slug, { size: 100 }),
+          getStoryById(storyId),
+          getChapters(storyId, { size: 100 }),
         ]);
-        const matched = storiesResult.data.find((item) => item.slug === slug) ?? null;
-        if (!matched || matched.uploader?.id !== myInfo.id) {
+        if (!storyData || storyData.uploader?.id !== myInfo.id) {
           setError("Không tìm thấy truyện hoặc bạn không có quyền quản lý chương.");
           setStory(null);
           setChapters([]);
           return;
         }
-        setStory(matched);
+        setStory(storyData);
         setChapters(chaptersResult.data ?? []);
       } catch {
         setError("Không tải được danh sách chương. Vui lòng thử lại.");
@@ -76,11 +75,11 @@ export default function ChapterManagePage() {
     };
 
     fetch();
-  }, [slug]);
+  }, [storyId]);
 
   const handleCreateChapter = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!slug || Array.isArray(slug) || !story?.id) return;
+    if (!storyId || !story?.id) return;
 
     try {
       setSavingChapter("create");
@@ -181,7 +180,7 @@ export default function ChapterManagePage() {
     setPreviewPages([]);
   };
 
-  if (!slug || Array.isArray(slug) || !story?.id) {
+  if (!storyId || !story?.id) {
     return (
       <UploaderLayout>
         <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
@@ -464,7 +463,7 @@ export default function ChapterManagePage() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => router.push(`/uploader/stories/${slug}/chapters/${chapter.id}/content`)}
+                    onClick={() => router.push(`/uploader/stories/${storyId}/chapters/${chapter.id}/content`)}
                     className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700"
                   >
                     Nội dung

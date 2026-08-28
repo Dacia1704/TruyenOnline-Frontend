@@ -85,7 +85,7 @@ export function StoryCard({
   onViewPublishRequestDetail,
 }: StoryCardProps) {
   const status = statusLabel[story.status] ?? statusLabel.ONGOING;
-  const storyHref = `/uploader/stories/${story.slug}`;
+  const storyHref = `/uploader/stories/${story.id}`;
 
   const publishStatus = publishRequestStatus ? publishStatusConfig[publishRequestStatus] : null;
 
@@ -214,7 +214,7 @@ export function StoryCard({
             </button>
           )}
           <Link
-            href={story.slug ? `/uploader/stories/${story.slug}/chapters` : `/uploader/stories/${story.id}/chapters`}
+            href={`/uploader/stories/${story.id}/chapters`}
             className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition hover:bg-muted"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

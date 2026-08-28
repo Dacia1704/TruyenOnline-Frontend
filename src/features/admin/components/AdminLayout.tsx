@@ -9,16 +9,86 @@ import { LoginResponse } from "@/lib/types/auth";
 import { getMySubscription, SubscriptionResponse } from "@/lib/api/subscription";
 import { logout } from "@/lib/api/auth";
 
-const navItems = [
-  { href: "/admin/users", label: "Quản lý user" },
-  { href: "/admin/authors", label: "Quản lý tác giả" },
-  { href: "/admin/genres", label: "Quản lý thể loại" },
-  { href: "/admin/stories", label: "Quản lý story", exact: true },
-  { href: "/admin/stories/pending", label: "Quản lý yêu cầu duyệt" },
-  { href: "/admin/banners", label: "Quản lý banner" },
-  { href: "/admin/moderation", label: "Quản lý kiểm duyệt" },
-  { href: "/admin/subscription-plans", label: "Quản lý gói Premium" },
-  { href: "/admin/transactions", label: "Quản lý giao dịch" },
+// Menu items with parent-child hierarchy
+const navMenuGroups = [
+  {
+    label: "Quản lý người dùng",
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+        />
+      </svg>
+    ),
+    items: [{ href: "/admin/users", label: "Quản lý user" }],
+  },
+  {
+    label: "Quản lý truyện",
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+        />
+      </svg>
+    ),
+    items: [
+      { href: "/admin/stories", label: "Quản lý story", exact: true },
+      { href: "/admin/genres", label: "Quản lý thể loại" },
+      { href: "/admin/stories/pending", label: "Quản lý yêu cầu duyệt" },
+      { href: "/admin/moderation", label: "Quản lý khiếu nại" },
+    ],
+  },
+  {
+    label: "Quản lý giao dịch",
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+        />
+      </svg>
+    ),
+    items: [
+      { href: "/admin/subscription-plans", label: "Quản lý gói Premium" },
+      { href: "/admin/transactions", label: "Quản lý giao dịch" },
+    ],
+  },
+  {
+    label: "Quản lý hành động",
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+        />
+      </svg>
+    ),
+    items: [{ href: "/admin/audit-logs", label: "Quản lý log" }],
+  },
+  {
+    label: "Quản lý banner",
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+        />
+      </svg>
+    ),
+    items: [{ href: "/admin/banners", label: "Quản lý banner" }],
+  },
 ];
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -31,6 +101,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Track which menu groups are expanded
+  const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     setMounted(true);
@@ -52,6 +125,29 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Auto-expand groups that contain active route
+  useEffect(() => {
+    const newExpanded: Record<string, boolean> = {};
+    navMenuGroups.forEach((group) => {
+      const hasActive = group.items.some((item) =>
+        item.exact ? pathname === item.href : pathname.startsWith(item.href + "/") || pathname === item.href,
+      );
+      newExpanded[group.label] = hasActive;
+    });
+    setExpandedGroups((prev) => {
+      // Keep existing state but update groups with active items
+      const merged = { ...prev };
+      Object.keys(newExpanded).forEach((key) => {
+        if (newExpanded[key]) merged[key] = true;
+      });
+      return merged;
+    });
+  }, [pathname]);
+
+  const toggleGroup = (label: string) => {
+    setExpandedGroups((prev) => ({ ...prev, [label]: !prev[label] }));
+  };
 
   const initials = useMemo(() => {
     if (!user?.username) return "?";
@@ -85,20 +181,53 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
   const Sidebar = () => (
     <nav className="space-y-1">
-      {navItems.map((item) => (
-        <Link
-          key={item.href}
-          href={item.href}
-          onClick={() => setDrawerOpen(false)}
-          className={`block rounded-lg px-4 py-2.5 text-sm font-medium transition ${
-            isActive(item.href, item.exact)
-              ? "bg-indigo-500/20 text-indigo-400 dark:text-indigo-400"
-              : "text-muted-foreground hover:bg-muted hover:text-foreground dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white"
-          }`}
-        >
-          {item.label}
-        </Link>
-      ))}
+      {navMenuGroups.map((group) => {
+        const isExpanded = expandedGroups[group.label] ?? false;
+        return (
+          <div key={group.label}>
+            <button
+              type="button"
+              onClick={() => toggleGroup(group.label)}
+              className={`flex w-full items-center justify-between rounded-lg px-4 py-2.5 text-sm font-medium transition ${
+                isExpanded
+                  ? "bg-indigo-500/20 text-indigo-400 dark:text-indigo-400"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground dark:text-white/70 dark:hover:bg-white/10 dark:hover:text-white"
+              }`}
+            >
+              <span className="flex items-center gap-3">
+                {group.icon}
+                <span className="flex-1 text-left">{group.label}</span>
+              </span>
+              <svg
+                className={`w-4 h-4 transition-transform ${isExpanded ? "rotate-180" : ""}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {isExpanded && (
+              <div className="ml-4 mt-1 space-y-0.5 border-l border-border dark:border-white/10 pl-3">
+                {group.items.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    onClick={() => setDrawerOpen(false)}
+                    className={`block rounded-lg px-4 py-2 text-sm transition ${
+                      isActive(item.href, item.exact)
+                        ? "bg-indigo-500/15 text-indigo-400 dark:text-indigo-400 font-medium"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground dark:text-white/60 dark:hover:bg-white/10 dark:hover:text-white"
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </nav>
   );
 
@@ -308,9 +437,9 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
           {/* Backdrop */}
           <div className="absolute inset-0 bg-black/50" onClick={() => setDrawerOpen(false)} />
           {/* Drawer */}
-          <div className="absolute left-0 top-0 bottom-0 w-72 bg-background border-r shadow-2xl">
-            <div className="flex items-center justify-between p-4 border-b">
-              <span className="font-semibold">Menu</span>
+          <div className="absolute left-0 top-0 bottom-0 w-72 bg-background border-r shadow-2xl overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b sticky top-0 bg-background z-10">
+              <span className="font-semibold text-foreground">Menu Admin</span>
               <button type="button" onClick={() => setDrawerOpen(false)} className="rounded-lg p-2 hover:bg-muted">
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -324,12 +453,16 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
-      {/* Main content area with sidebar */}
-      <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr] pt-16">
-        <aside className="hidden lg:block border-r border-border dark:border-white/10 px-4 py-6 sticky top-16 h-[calc(100vh-4rem)] overflow-y-auto">
-          <Sidebar />
+      {/* Main content area - with sidebar */}
+      <div className="pt-20">
+        {/* Sidebar for desktop */}
+        <aside className="hidden lg:block fixed left-0 top-16 bottom-0 w-64 border-r border-border dark:border-white/10 bg-background/80 backdrop-blur-sm overflow-y-auto z-40">
+          <div className="p-4">
+            <Sidebar />
+          </div>
         </aside>
-        <main className="overflow-x-auto px-4 lg:px-6 py-8 min-h-[calc(100vh-4rem)]">{children}</main>
+        {/* Main content - offset for sidebar */}
+        <main className="lg:ml-8 lg:pl-64 min-h-[calc(100vh-4rem)] px-4 lg:px-6 py-8">{children}</main>
       </div>
     </div>
   );

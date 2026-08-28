@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { AdminLayout } from "../components/AdminLayout";
-import { getStories, deleteStory, banStory, unbanStory, ViolationType } from "@/lib/api/stories";
+import { getStoriesAdmin, deleteStory, banStory, unbanStory, ViolationType } from "@/lib/api/stories";
 import type { Story } from "@/lib/types/stories";
 
-type Tab = "published" | "unpublished";
+type Tab = "published" | "unpublished" | "banned";
 
 const VIOLATION_TYPES: { value: ViolationType; label: string }[] = [
   { value: "COPYRIGHT", label: "Vi phạm bản quyền" },
@@ -17,6 +18,7 @@ const VIOLATION_TYPES: { value: ViolationType; label: string }[] = [
 ];
 
 export default function AdminStoryManagementPage() {
+  const router = useRouter();
   const [stories, setStories] = useState<Story[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,9 +38,10 @@ export default function AdminStoryManagementPage() {
     setLoading(true);
     setError(null);
     try {
-      const result = await getStories({
+      const result = await getStoriesAdmin({
         size: 100,
-        isPublished: tab === "published" ? true : false,
+        isPublished: tab === "published" ? true : tab === "unpublished" ? false : undefined,
+        isBanned: tab === "banned" ? true : undefined,
       });
       setStories(result.data ?? []);
     } catch {
@@ -104,8 +107,9 @@ export default function AdminStoryManagementPage() {
 
   const counts = useMemo(() => {
     return {
-      published: stories.filter((story) => story.isPublished !== false).length,
-      unpublished: stories.filter((story) => story.isPublished === false).length,
+      published: stories.filter((story) => story.isPublished === true && story.isBanned !== true).length,
+      unpublished: stories.filter((story) => story.isPublished === false && story.isBanned !== true).length,
+      banned: stories.filter((story) => story.isBanned === true).length,
     };
   }, [stories]);
 
@@ -145,6 +149,17 @@ export default function AdminStoryManagementPage() {
         >
           Chưa xuất bản {counts.unpublished ? `(${counts.unpublished})` : ""}
         </button>
+        <button
+          type="button"
+          onClick={() => setTab("banned")}
+          className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${
+            tab === "banned"
+              ? "bg-foreground text-background"
+              : "border border-border text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Bị ban {counts.banned ? `(${counts.banned})` : ""}
+        </button>
       </div>
 
       <div className="mt-8 rounded-2xl border border-border overflow-hidden">
@@ -178,14 +193,17 @@ export default function AdminStoryManagementPage() {
                 stories.map((story) => (
                   <tr key={story.id} className="border-t border-border">
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => router.push(`/admin/stories/${story.id}`)}
+                        className="flex items-center gap-2 hover:text-indigo-500 transition text-left"
+                      >
                         {story.isBanned && (
                           <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-600">
                             Bị ban
                           </span>
                         )}
                         <span className="font-medium">{story.title}</span>
-                      </div>
+                      </button>
                     </td>
                     <td className="px-4 py-3">{story.uploader?.username || "—"}</td>
                     <td className="px-4 py-3">{story.status}</td>

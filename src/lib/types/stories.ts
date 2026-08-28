@@ -47,7 +47,7 @@ export interface User {
 }
 
 export interface Role {
-  id: number;
+  id: string;
   name: string;
   description?: string;
 }
@@ -116,6 +116,7 @@ export interface ReadingHistory {
   id: string;
   story?: Story;
   chapter?: Chapter;
+  lastChapter?: Chapter;
   lastReadAt?: string;
 }
 
@@ -154,12 +155,17 @@ export interface Banner {
 
 export type ModerationActionType = "BAN" | "UNBAN";
 export type ModerationObjectType = "STORY" | "CHAPTER" | "COMMENT" | "USER";
-export type ViolationType = "COPYRIGHT" | "PORNOGRAPHY | VIOLENCE" | "SPAM" | "HARASSMENT" | "OTHER";
+export type ViolationType = "COPYRIGHT" | "PORNOGRAPHY" | "VIOLENCE" | "SPAM" | "HARASSMENT" | "OTHER";
 
 export interface ModerationAction {
   id: string;
   objectId: string;
   objectType: ModerationObjectType;
+  // Response objects (for displaying titles)
+  storyResponse?: Story;
+  chapterResponse?: Chapter;
+  userResponse?: User;
+  commentResponse?: Comment;
   actionType: ModerationActionType;
   violationType?: ViolationType;
   reason?: string;

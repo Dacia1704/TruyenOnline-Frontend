@@ -71,16 +71,17 @@ export default function AdminModerationPage() {
   const [reviewNote, setReviewNote] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  // Attachments modal
+  const [attachmentsModal, setAttachmentsModal] = useState<{
+    attachments: { id: string; attachmentUrl: string; createdAt?: string }[];
+  } | null>(null);
+
   const loadAppeals = useCallback(async (page: number, status: AppealStatus | "ALL") => {
     setAppealsLoading(true);
     try {
-      const result = await getAllBanAppeals({ page, size: 20 });
-      // Filter by status on client side since API might not support it
-      let filteredData = result.data;
-      if (status !== "ALL") {
-        filteredData = result.data.filter((a) => a.status === status);
-      }
-      setAppeals(filteredData);
+      const apiStatus = status !== "ALL" ? status : undefined;
+      const result = await getAllBanAppeals({ page, size: 20, status: apiStatus });
+      setAppeals(result.data);
       setAppealsTotalPages(result.totalPages);
       setAppealsPage(result.currentPage);
     } catch {
@@ -234,60 +235,107 @@ export default function AdminModerationPage() {
               <>
                 <div className="space-y-3">
                   {appeals.map((appeal) => (
-                    <div key={appeal.id} className="rounded-xl border border-border bg-card p-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${statusColors[appeal.status]}`}>
-                              {statusLabels[appeal.status]}
-                            </span>
-                            <span className="text-sm text-muted-foreground">
-                              {appeal.user?.username ?? "Người dùng"}
-                            </span>
+                    <div key={appeal.id} className="group rounded-2xl border border-border bg-card overflow-hidden hover:shadow-md transition-all">
+                      {/* Header */}
+                      <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-slate-50 to-white dark:from-slate-900/50 dark:to-transparent border-b border-border/50">
+                        <div className="flex items-center gap-3">
+                          {/* Avatar */}
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">
+                            {appeal.user?.username?.charAt(0).toUpperCase() ?? "?"}
                           </div>
-                          <div className="mt-2 space-y-1">
-                            <p className="text-sm text-foreground">
-                              <span className="font-medium">Loại vi phạm: </span>
-                              {appeal.moderationAction?.violationType &&
-                                violationTypeLabels[appeal.moderationAction.violationType as ViolationType]}
-                            </p>
-                            <p className="text-sm text-foreground">
-                              <span className="font-medium">Lý do ban: </span>
-                              {appeal.moderationAction?.reason || "—"}
-                            </p>
-                            <p className="text-sm text-foreground">
-                              <span className="font-medium">Nội dung khiếu nại: </span>
-                              {appeal.content}
-                            </p>
+                          <div>
+                            <p className="font-medium text-sm">{appeal.user?.username ?? "Người dùng"}</p>
+                            <p className="text-xs text-muted-foreground">{formatDate(appeal.createdAt)}</p>
                           </div>
-                          <p className="mt-2 text-xs text-muted-foreground">
-                            Gửi lúc: {formatDate(appeal.createdAt)}
-                            {appeal.resolvedAt && ` • Xử lý lúc: ${formatDate(appeal.resolvedAt)}`}
-                          </p>
-                          {appeal.reviewerNote && (
-                            <p className="mt-2 text-sm text-foreground bg-muted/50 p-2 rounded-lg">
-                              <span className="font-medium">Ghi chú của người duyệt: </span>
-                              {appeal.reviewerNote}
-                            </p>
-                          )}
                         </div>
-                        {appeal.status === "PENDING" && (
-                          <div className="flex flex-col gap-2 shrink-0">
-                            <button
-                              onClick={() => setReviewModal({ appeal, action: "approve" })}
-                              className="rounded-lg bg-emerald-500 px-4 py-2 text-xs font-medium text-white hover:bg-emerald-600 transition"
-                            >
-                              Chấp nhận
-                            </button>
-                            <button
-                              onClick={() => setReviewModal({ appeal, action: "reject" })}
-                              className="rounded-lg bg-red-500 px-4 py-2 text-xs font-medium text-white hover:bg-red-600 transition"
-                            >
-                              Từ chối
-                            </button>
+                        <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${statusColors[appeal.status]}`}>
+                          {statusLabels[appeal.status]}
+                        </span>
+                      </div>
+
+                      {/* Body */}
+                      <div className="px-5 py-4">
+                        {/* Object info */}
+                        <div className="flex items-start gap-4">
+                          <div className="flex-1 min-w-0 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground uppercase tracking-wide">Loại vi phạm</span>
+                              <span className="text-sm font-medium">
+                                {appeal.moderationAction?.violationType &&
+                                  violationTypeLabels[appeal.moderationAction.violationType as ViolationType]}
+                              </span>
+                            </div>
+                            <div className="flex items-start gap-2">
+                              <span className="text-xs text-muted-foreground uppercase tracking-wide shrink-0 pt-0.5">Lý do ban</span>
+                              <span className="text-sm">{appeal.moderationAction?.reason || "—"}</span>
+                            </div>
+                            <div className="flex items-start gap-2">
+                              <span className="text-xs text-muted-foreground uppercase tracking-wide shrink-0 pt-0.5">Khiếu nại</span>
+                              <span className="text-sm">{appeal.content}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Attachments */}
+                        {(appeal.attachments && appeal.attachments.length > 0) && (
+                          <div className="mt-4 pt-4 border-t border-border/50">
+                            <div className="flex items-center gap-2 mb-2">
+                              <svg className="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                              </svg>
+                              <span className="text-xs text-muted-foreground font-medium">Minh chứng ({appeal.attachments.length})</span>
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                              {appeal.attachments.map((att, idx) => (
+                                <button
+                                  key={att.id}
+                                  onClick={() => setAttachmentsModal({ attachments: appeal.attachments! })}
+                                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 text-xs font-medium hover:bg-indigo-100 dark:hover:bg-indigo-500/20 transition"
+                                >
+                                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                  </svg>
+                                  Ảnh {idx + 1}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Reviewer note */}
+                        {appeal.reviewerNote && (
+                          <div className="mt-4 p-3 rounded-xl bg-amber-50 dark:bg-amber-500/10 border border-amber-200/50 dark:border-amber-500/20">
+                            <div className="flex items-center gap-2 mb-1">
+                              <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+                              </svg>
+                              <span className="text-xs text-amber-600 dark:text-amber-400 font-medium">Ghi chú của {appeal.reviewer?.username ?? "người duyệt"}</span>
+                            </div>
+                            <p className="text-sm text-amber-800 dark:text-amber-200">{appeal.reviewerNote}</p>
+                            {appeal.resolvedAt && (
+                              <p className="text-xs text-amber-600/70 dark:text-amber-400/70 mt-1">{formatDate(appeal.resolvedAt)}</p>
+                            )}
                           </div>
                         )}
                       </div>
+
+                      {/* Actions */}
+                      {appeal.status === "PENDING" && (
+                        <div className="px-5 py-4 bg-slate-50/50 dark:bg-slate-900/50 border-t border-border/50 flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => setReviewModal({ appeal, action: "reject" })}
+                            className="rounded-lg border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 px-4 py-2 text-sm font-medium hover:bg-red-50 dark:hover:bg-red-500/10 transition"
+                          >
+                            Từ chối
+                          </button>
+                          <button
+                            onClick={() => setReviewModal({ appeal, action: "approve" })}
+                            className="rounded-lg bg-emerald-500 text-white px-4 py-2 text-sm font-medium hover:bg-emerald-600 transition"
+                          >
+                            Chấp nhận
+                          </button>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -350,38 +398,48 @@ export default function AdminModerationPage() {
               <>
                 <div className="space-y-3">
                   {moderations.map((mod) => (
-                    <div key={mod.id} className="rounded-xl border border-border bg-card p-4">
-                      <div className="flex items-center justify-between gap-4">
-                        <div>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-medium ${
-                              mod.actionType === "BAN"
-                                ? "bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400"
-                                : "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400"
-                            }`}>
-                              {mod.actionType === "BAN" ? "Ban" : "Unban"}
-                            </span>
-                            <span className="text-sm font-medium text-foreground">
-                              {objectTypeLabels[mod.objectType]}
-                            </span>
-                            <span className="text-sm text-muted-foreground">
-                              ID: {mod.objectId.slice(0, 8)}...
-                            </span>
-                          </div>
+                    <div key={mod.id} className="group rounded-2xl border border-border bg-card overflow-hidden hover:shadow-md transition-all">
+                      {/* Header */}
+                      <div className="flex items-center justify-between px-5 py-4 bg-gradient-to-r from-slate-50 to-white dark:from-slate-900/50 dark:to-transparent border-b border-border/50">
+                        <div className="flex items-center gap-3">
+                          <span className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold ${
+                            mod.actionType === "BAN"
+                              ? "bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400"
+                              : "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400"
+                          }`}>
+                            {mod.actionType === "BAN" ? "🔨 Ban" : "✅ Unban"}
+                          </span>
+                          <span className="text-sm text-muted-foreground">•</span>
+                          <span className="text-sm font-medium text-foreground">
+                            {mod.objectType === "STORY" && mod.storyResponse && `Truyện: ${mod.storyResponse.title}`}
+                            {mod.objectType === "CHAPTER" && mod.chapterResponse && `Chương: ${mod.chapterResponse.title || `Chương ${mod.chapterResponse.chapterNumber}`}${mod.storyResponse ? ` - ${mod.storyResponse.title}` : ""}`}
+                            {mod.objectType === "USER" && mod.userResponse && `Người dùng: ${mod.userResponse.username}`}
+                            {mod.objectType === "COMMENT" && mod.commentResponse && `Bình luận: ${mod.commentResponse.content.slice(0, 50)}${mod.commentResponse.content.length > 50 ? "..." : ""}`}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="text-sm text-muted-foreground">{mod.adminUsername}</span>
+                          <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">{formatDate(mod.createdAt)}</span>
+                        </div>
+                      </div>
+
+                      {/* Body */}
+                      <div className="px-5 py-4">
+                        <div className="flex flex-wrap gap-4">
                           {mod.violationType && (
-                            <p className="mt-1 text-sm text-muted-foreground">
-                              Loại vi phạm: {violationTypeLabels[mod.violationType as ViolationType]}
-                            </p>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground">Loại vi phạm</span>
+                              <span className="px-2.5 py-1 rounded-full bg-orange-100 dark:bg-orange-500/20 text-orange-700 dark:text-orange-400 text-xs font-medium">
+                                {violationTypeLabels[mod.violationType as ViolationType]}
+                              </span>
+                            </div>
                           )}
                           {mod.reason && (
-                            <p className="mt-1 text-sm text-muted-foreground">
-                              Lý do: {mod.reason}
-                            </p>
+                            <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+                              <span className="text-xs text-muted-foreground">Lý do</span>
+                              <span className="text-sm text-foreground">{mod.reason}</span>
+                            </div>
                           )}
-                        </div>
-                        <div className="text-right shrink-0">
-                          <p className="text-sm text-muted-foreground">{mod.adminUsername}</p>
-                          <p className="text-xs text-muted-foreground">{formatDate(mod.createdAt)}</p>
                         </div>
                       </div>
                     </div>
@@ -469,6 +527,56 @@ export default function AdminModerationPage() {
                   : reviewModal.action === "approve"
                     ? "Chấp nhận"
                     : "Từ chối"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Attachments Modal */}
+      {attachmentsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-card rounded-2xl border border-border shadow-2xl w-full max-w-2xl mx-4 overflow-hidden max-h-[80vh] flex flex-col">
+            <div className="p-6 border-b border-border flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-foreground">Minh chứng khiếu nại</h3>
+              <button
+                onClick={() => setAttachmentsModal(null)}
+                className="p-2 hover:bg-muted rounded-lg transition"
+              >
+                <svg className="h-5 w-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto">
+              <div className="grid grid-cols-2 gap-4">
+                {attachmentsModal.attachments.map((attachment) => (
+                  <div key={attachment.id} className="relative group">
+                    <img
+                      src={attachment.attachmentUrl}
+                      alt="Minh chứng"
+                      className="w-full h-auto rounded-lg border border-border object-contain max-h-96"
+                    />
+                    <a
+                      href={attachment.attachmentUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="absolute top-2 right-2 p-2 bg-black/50 rounded-lg opacity-0 group-hover:opacity-100 transition"
+                    >
+                      <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="p-4 border-t border-border flex justify-end">
+              <button
+                onClick={() => setAttachmentsModal(null)}
+                className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted transition"
+              >
+                Đóng
               </button>
             </div>
           </div>

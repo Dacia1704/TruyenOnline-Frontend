@@ -23,7 +23,6 @@ export async function getStories(params: {
   uploaderId?: string;
   type?: StoryType;
   status?: StoryStatus;
-  isPublished?: boolean;
   sortType?: "NEWEST" | "UPDATED" | "VIEW" | "FOLLOW" | "ALPHABET_ASC" | "ALPHABET_DESC" | "OLDEST";
   genres?: string[];
 }) {
@@ -34,7 +33,6 @@ export async function getStories(params: {
       uploaderId: params.uploaderId,
       type: params.type,
       status: params.status,
-      isPublished: params.isPublished,
       sortType: params.sortType,
       genres: params.genres,
     },
@@ -48,8 +46,47 @@ export async function getStories(params: {
   return data.data;
 }
 
-export async function getStory(slug: string) {
-  const { data } = await apiClient.get<{ code: number; data: Story }>(`/api/stories/${slug}`);
+export async function getStoriesAdmin(params: {
+  page?: number;
+  size?: number;
+  search?: string;
+  uploaderId?: string;
+  type?: StoryType;
+  status?: StoryStatus;
+  isPublished?: boolean;
+  isBanned?: boolean;
+  sortType?: "NEWEST" | "UPDATED" | "VIEW" | "FOLLOW" | "ALPHABET_ASC" | "ALPHABET_DESC" | "OLDEST";
+  genres?: string[];
+}) {
+  const { data } = await apiClient.post<{ code: number; data: PageResponse<Story> }>(
+    "/api/stories/list/admin",
+    {
+      search: params.search ?? "",
+      uploaderId: params.uploaderId,
+      type: params.type,
+      status: params.status,
+      isPublished: params.isPublished,
+      isBanned: params.isBanned,
+      sortType: params.sortType,
+      genres: params.genres,
+    },
+    {
+      params: {
+        page: params.page ?? 1,
+        size: params.size ?? 12,
+      },
+    },
+  );
+  return data.data;
+}
+
+export async function getStoryBySlug(slug: string) {
+  const { data } = await apiClient.get<{ code: number; data: Story }>(`/api/stories/slug/${slug}`);
+  return data.data;
+}
+
+export async function getStoryById(id: string) {
+  const { data } = await apiClient.get<{ code: number; data: Story }>(`/api/stories/id/${id}`);
   return data.data;
 }
 
@@ -62,6 +99,8 @@ export async function createStory(payload: {
   isPublished?: boolean;
   freeChapterLimit?: number | null;
   coverImageFile?: File | null;
+  authors?: StoryAuthorUpdateRequest[];
+  genreIds: number[];
 }) {
   if (payload.coverImageFile) {
     const formData = new FormData();
@@ -74,6 +113,10 @@ export async function createStory(payload: {
     if (payload.freeChapterLimit !== null && payload.freeChapterLimit !== undefined) {
       formData.append("freeChapterLimit", String(payload.freeChapterLimit));
     }
+    if (payload.authors) {
+      formData.append("authors", JSON.stringify(payload.authors));
+    }
+    formData.append("genreIds", payload.genreIds.join(","));
     const { data } = await apiClient.post<{ code: number; data: Story }>("/api/stories", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
@@ -88,6 +131,8 @@ export async function createStory(payload: {
     status: payload.status,
     isPublished: payload.isPublished,
     freeChapterLimit: payload.freeChapterLimit,
+    authors: payload.authors,
+    genreIds: payload.genreIds,
   });
   return data.data;
 }
@@ -102,7 +147,10 @@ export async function updateStory(
     status: StoryStatus;
     isPublished: boolean;
     freeChapterLimit: number | null;
+    viewCount: number;
     coverImageFile: File | null;
+    authors: StoryAuthorUpdateRequest[];
+    genreIds: number[];
   }>,
 ) {
   if (payload.coverImageFile) {
@@ -116,6 +164,9 @@ export async function updateStory(
     if (payload.freeChapterLimit !== null && payload.freeChapterLimit !== undefined) {
       formData.append("freeChapterLimit", String(payload.freeChapterLimit));
     }
+    if (payload.viewCount !== undefined) formData.append("viewCount", String(payload.viewCount));
+    if (payload.authors) formData.append("authors", JSON.stringify(payload.authors));
+    if (payload.genreIds) formData.append("genreIds", payload.genreIds.join(","));
     const { data } = await apiClient.patch<{ code: number; data: Story }>(`/api/stories/${id}`, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
@@ -130,8 +181,6 @@ export async function deleteStory(id: string) {
   const { data } = await apiClient.delete<{ code: number; message: string }>(`/api/stories/${id}`);
   return data;
 }
-
-export type ViolationType = "COPYRIGHT" | "PORNOGRAPHY" | "VIOLENCE" | "SPAM" | "HARASSMENT" | "OTHER";
 
 export async function banStory(id: string, violationType: ViolationType, reason: string) {
   const { data } = await apiClient.patch<{ code: number; data: Story }>(`/api/stories/${id}/ban`, {
@@ -150,28 +199,39 @@ export async function unbanStory(id: string, reason: string) {
 
 // ============ Chapters ============
 
-export async function getChapters(storyId: string, params?: { page?: number; size?: number; search?: string }) {
+export async function getChapters(
+  storyId: string,
+  params?: { page?: number; size?: number; search?: string; from?: number },
+) {
   const { data } = await apiClient.get<{ code: number; data: PageResponse<Chapter> }>(
-    `/api/stories/${storyId}/chapters`,
+    `/api/stories/id/${storyId}/chapters`,
     {
       params: {
         page: params?.page ?? 1,
         size: params?.size ?? 50,
         search: params?.search ?? "",
+        from: params?.from,
       },
     },
   );
   return data.data;
 }
 
-export async function getChaptersBySlug(slug: string, params?: { page?: number; size?: number; search?: string }) {
-  const { data } = await apiClient.get<{ code: number; data: PageResponse<Chapter> }>(`/api/stories/${slug}/chapters`, {
-    params: {
-      page: params?.page ?? 1,
-      size: params?.size ?? 50,
-      search: params?.search ?? "",
+export async function getChaptersBySlug(
+  slug: string,
+  params?: { page?: number; size?: number; search?: string; from?: number },
+) {
+  const { data } = await apiClient.get<{ code: number; data: PageResponse<Chapter> }>(
+    `/api/stories/slug/${slug}/chapters`,
+    {
+      params: {
+        page: params?.page ?? 1,
+        size: params?.size ?? 50,
+        search: params?.search ?? "",
+        from: params?.from,
+      },
     },
-  });
+  );
   return data.data;
 }
 
@@ -222,6 +282,21 @@ export async function updateChapterPublishStatus(chapterIds: string[], publishSt
 export async function deleteChapter(chapterId: string) {
   const { data } = await apiClient.delete<{ code: number; message: string }>(`/api/chapters/${chapterId}`);
   return data;
+}
+
+export async function banChapter(chapterId: string, violationType: ViolationType, reason: string) {
+  const { data } = await apiClient.patch<{ code: number; data: Chapter }>(`/api/chapters/${chapterId}/ban`, {
+    violationType,
+    reason,
+  });
+  return data.data;
+}
+
+export async function unbanChapter(chapterId: string, reason: string) {
+  const { data } = await apiClient.patch<{ code: number; data: Chapter }>(`/api/chapters/${chapterId}/unban`, {
+    reason,
+  });
+  return data.data;
 }
 
 // ============ Chapter Pages ============
@@ -342,11 +417,19 @@ export async function uploadStoryCover(file: File) {
 
 // ============ Bookmarks ============
 
+export async function getMyBookmarks(params?: { page?: number; size?: number }) {
+  const { data } = await apiClient.get<{ code: number; data: PageResponse<Bookmark> }>("/api/bookmarks/me", {
+    params: {
+      page: params?.page ?? 0,
+      size: params?.size ?? 10,
+    },
+  });
+  return data.data;
+}
+
 export async function getBookmark(storyId: string) {
   try {
-    const { data } = await apiClient.get<{ code: number; data: Bookmark }>("/api/bookmarks", {
-      params: { storyId },
-    });
+    const { data } = await apiClient.get<{ code: number; data: Bookmark }>(`/api/bookmarks/${storyId}`);
     return data.data;
   } catch {
     return null;
@@ -354,26 +437,23 @@ export async function getBookmark(storyId: string) {
 }
 
 export async function createBookmark(storyId: string) {
-  const { data } = await apiClient.post<{ code: number; data: Bookmark }>("/api/bookmarks", null, {
-    params: { storyId },
-  });
+  const { data } = await apiClient.post<{ code: number; data: Bookmark }>(`/api/bookmarks/${storyId}`);
   return data.data;
 }
 
 export async function deleteBookmark(storyId: string) {
-  const { data } = await apiClient.delete<{ code: number; message: string }>("/api/bookmarks", {
-    params: { storyId },
-  });
+  const { data } = await apiClient.delete<{ code: number; message: string }>(`/api/bookmarks/${storyId}`);
   return data;
 }
 
 // ============ Reading Histories ============
 
-export async function getMyReadingHistories(params?: { page?: number; size?: number }) {
+export async function getMyReadingHistories(params?: { page?: number; size?: number; type?: "STORY" | "CHAPTER" }) {
   const { data } = await apiClient.get<{ code: number; data: PageResponse<ReadingHistory> }>("/api/reading-histories", {
     params: {
       page: params?.page ?? 1,
       size: params?.size ?? 20,
+      type: params?.type,
     },
   });
   return data.data;
@@ -511,13 +591,16 @@ export async function getAuthors(params?: { page?: number; size?: number; search
   totalElements: number;
   data: Author[];
 }> {
-  const { data } = await apiClient.get<{ code: number; data: {
-    currentPage: number;
-    pageSize: number;
-    totalPages: number;
-    totalElements: number;
-    data: Author[];
-  }}>("/api/authors", {
+  const { data } = await apiClient.get<{
+    code: number;
+    data: {
+      currentPage: number;
+      pageSize: number;
+      totalPages: number;
+      totalElements: number;
+      data: Author[];
+    };
+  }>("/api/authors", {
     params: {
       page: params?.page ?? 1,
       size: params?.size ?? 50,
@@ -546,10 +629,7 @@ export async function createAuthor(payload: {
 }
 
 export async function updateStoryAuthors(storyId: string, authors: StoryAuthorUpdateRequest[]): Promise<unknown> {
-  const { data } = await apiClient.put<{ code: number; data: unknown }>(
-    `/api/authors/story/${storyId}`,
-    authors,
-  );
+  const { data } = await apiClient.put<{ code: number; data: unknown }>(`/api/authors/story/${storyId}`, authors);
   return data.data;
 }
 
@@ -597,17 +677,15 @@ export async function getModerationActions(params: {
   violationType?: ViolationType;
   objectId?: string;
 }) {
-  const { data } = await apiClient.get<{ code: number; data: PageResponse<ModerationAction> }>(
+  const { data } = await apiClient.post<{ code: number; data: PageResponse<ModerationAction> }>(
     "/api/moderation-actions",
     {
-      params: {
-        page: params.page ?? 1,
-        size: params.size ?? 20,
-        objectType: params.objectType,
-        actionType: params.actionType,
-        violationType: params.violationType,
-        objectId: params.objectId,
-      },
+      page: params.page ?? 1,
+      size: params.size ?? 20,
+      objectType: params.objectType,
+      actionType: params.actionType,
+      violationType: params.violationType,
+      objectId: params.objectId,
     },
   );
   return data.data;
@@ -643,15 +721,12 @@ export interface BanAppeal {
 }
 
 export async function getMyBanAppeals(params?: { page?: number; size?: number }) {
-  const { data } = await apiClient.get<{ code: number; data: PageResponse<BanAppeal> }>(
-    "/api/ban-appeals/me",
-    {
-      params: {
-        page: params?.page ?? 1,
-        size: params?.size ?? 20,
-      },
+  const { data } = await apiClient.get<{ code: number; data: PageResponse<BanAppeal> }>("/api/ban-appeals/me", {
+    params: {
+      page: params?.page ?? 1,
+      size: params?.size ?? 20,
     },
-  );
+  });
   return data.data;
 }
 
@@ -673,31 +748,31 @@ export async function deleteBanAppeal(id: string) {
   return data;
 }
 
-export async function getAllBanAppeals(params?: { page?: number; size?: number }) {
-  const { data } = await apiClient.get<{ code: number; data: PageResponse<BanAppeal> }>(
-    "/api/ban-appeals",
-    {
-      params: {
-        page: params?.page ?? 1,
-        size: params?.size ?? 20,
-      },
+export async function getAllBanAppeals(params?: {
+  page?: number;
+  size?: number;
+  status?: "PENDING" | "APPROVED" | "REJECTED";
+}) {
+  const { data } = await apiClient.get<{ code: number; data: PageResponse<BanAppeal> }>("/api/ban-appeals", {
+    params: {
+      page: params?.page ?? 1,
+      size: params?.size ?? 20,
+      ...(params?.status && { status: params.status }),
     },
-  );
+  });
   return data.data;
 }
 
 export async function approveBanAppeal(id: string, reviewerNote?: string) {
-  const { data } = await apiClient.patch<{ code: number; data: BanAppeal }>(
-    `/api/ban-appeals/${id}/approve`,
-    { reviewerNote },
-  );
+  const { data } = await apiClient.patch<{ code: number; data: BanAppeal }>(`/api/ban-appeals/${id}/approve`, {
+    reviewerNote,
+  });
   return data.data;
 }
 
 export async function rejectBanAppeal(id: string, reviewerNote: string) {
-  const { data } = await apiClient.patch<{ code: number; data: BanAppeal }>(
-    `/api/ban-appeals/${id}/reject`,
-    { reviewerNote },
-  );
+  const { data } = await apiClient.patch<{ code: number; data: BanAppeal }>(`/api/ban-appeals/${id}/reject`, {
+    reviewerNote,
+  });
   return data.data;
 }
