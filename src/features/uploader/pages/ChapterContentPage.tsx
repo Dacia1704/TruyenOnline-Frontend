@@ -3,12 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { UploaderLayout } from "../components/UploaderLayout";
-import {
-  getChapter,
-  getChapterPages,
-  updateChapterContent,
-  deleteAllPages,
-} from "@/lib/api/stories";
+import { getChapter, getChapterPages, updateChapterContent, deleteAllPages } from "@/lib/api/stories";
 import type { Chapter, ChapterPage } from "@/lib/types/stories";
 
 export default function ChapterContentPage() {
@@ -107,7 +102,7 @@ export default function ChapterContentPage() {
         formData.append("files", file);
       });
       const { apiClient } = await import("@/lib/api/client");
-      const { data } = await apiClient.post("/api/chapters/pages", formData, {
+      const { data } = await apiClient.post("/chapters/pages", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setPages((prev) => [...prev, ...(data.data ?? [])]);

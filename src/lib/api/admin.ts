@@ -5,28 +5,28 @@ import { getStoriesAdmin } from "./stories";
 // ============ Users ============
 
 export async function getUsers(params: { page?: number; size?: number }) {
-  const { data } = await apiClient.get<{ code: number; data: PageResponse<User> }>("/api/users", {
+  const { data } = await apiClient.get<{ code: number; data: PageResponse<User> }>("/users", {
     params: { page: params.page ?? 1, size: params.size ?? 20 },
   });
   return data.data;
 }
 
 export async function banUser(userId: string, reason?: string) {
-  const { data } = await apiClient.patch<{ code: number; data: User }>(`/api/users/${userId}/ban`, {
+  const { data } = await apiClient.patch<{ code: number; data: User }>(`/users/${userId}/ban`, {
     reason: reason ?? "No reason provided",
   });
   return data.data;
 }
 
 export async function unbanUser(userId: string, reason?: string) {
-  const { data } = await apiClient.patch<{ code: number; data: User }>(`/api/users/${userId}/unban`, {
+  const { data } = await apiClient.patch<{ code: number; data: User }>(`/users/${userId}/unban`, {
     reason: reason ?? "Unbanned",
   });
   return data.data;
 }
 
 export async function updateUserRoles(userId: string, roleIds: string[]) {
-  const { data } = await apiClient.post<{ code: number; data: User }>(`/api/users/${userId}/roles`, {
+  const { data } = await apiClient.post<{ code: number; data: User }>(`/users/${userId}/roles`, {
     roles: roleIds,
   });
   return data.data;
@@ -35,7 +35,7 @@ export async function updateUserRoles(userId: string, roleIds: string[]) {
 // ============ Roles ============
 
 export async function getRoles() {
-  const { data } = await apiClient.get<{ code: number; data: Role[] }>("/api/users/roles");
+  const { data } = await apiClient.get<{ code: number; data: Role[] }>("/users/roles");
   return data.data;
 }
 
@@ -44,24 +44,24 @@ export async function getRoles() {
 import type { Genre } from "@/lib/types/stories";
 
 export async function getGenres() {
-  const { data } = await apiClient.get<{ code: number; data: Genre[] }>("/api/genres", {
+  const { data } = await apiClient.get<{ code: number; data: Genre[] }>("/genres", {
     params: { search: "" },
   });
   return data.data;
 }
 
 export async function createGenre(payload: { name: string }) {
-  const { data } = await apiClient.post<{ code: number; data: Genre }>("/api/genres", payload);
+  const { data } = await apiClient.post<{ code: number; data: Genre }>("/genres", payload);
   return data.data;
 }
 
 export async function updateGenre(id: number, payload: { name: string }) {
-  const { data } = await apiClient.patch<{ code: number; data: Genre }>(`/api/genres/${id}`, payload);
+  const { data } = await apiClient.patch<{ code: number; data: Genre }>(`/genres/${id}`, payload);
   return data.data;
 }
 
 export async function deleteGenre(id: number) {
-  const { data } = await apiClient.delete<{ code: number; message: string }>(`/api/genres/${id}`);
+  const { data } = await apiClient.delete<{ code: number; message: string }>(`/genres/${id}`);
   return data;
 }
 
@@ -87,7 +87,7 @@ export async function getAuthors(params?: { page?: number; size?: number; search
       totalElements: number;
       data: Author[];
     };
-  }>("/api/authors", {
+  }>("/authors", {
     params: {
       page: params?.page ?? 1,
       size: params?.size ?? 20,
@@ -104,7 +104,7 @@ export async function createAuthor(payload: { name: string; bio?: string; countr
   if (payload.country) formData.append("country", payload.country);
   if (payload.avatarFile) formData.append("avatarFile", payload.avatarFile);
 
-  const { data } = await apiClient.post<{ code: number; data: Author }>("/api/authors", formData, {
+  const { data } = await apiClient.post<{ code: number; data: Author }>("/authors", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
   return data.data;
@@ -125,14 +125,14 @@ export async function updateAuthor(
   if (payload.country !== undefined) formData.append("country", payload.country);
   if (payload.avatarFile) formData.append("avatarFile", payload.avatarFile);
 
-  const { data } = await apiClient.patch<{ code: number; data: Author }>(`/api/authors/${id}`, formData, {
+  const { data } = await apiClient.patch<{ code: number; data: Author }>(`/authors/${id}`, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
   return data.data;
 }
 
 export async function deleteAuthor(id: string) {
-  const { data } = await apiClient.delete<{ code: number; message: string }>(`/api/authors/${id}`);
+  const { data } = await apiClient.delete<{ code: number; message: string }>(`/authors/${id}`);
   return data;
 }
 
@@ -140,7 +140,7 @@ export async function getAdminDashboard() {
   const [users, stories, pending] = await Promise.all([
     getUsers({ page: 1, size: 1 }),
     getStoriesAdmin({ page: 1, size: 1 }),
-    apiClient.get<{ code: number; data: PageResponse<unknown> }>("/api/stories/publish-requests", {
+    apiClient.get<{ code: number; data: PageResponse<unknown> }>("/stories/publish-requests", {
       params: { page: 1, size: 1, status: "PENDING" },
     }),
   ]);

@@ -4,13 +4,13 @@ import { apiClient } from "./client";
 export type { Banner };
 
 export async function getActiveBanners(): Promise<Banner[]> {
-  const { data } = await apiClient.get<{ code: number; data: Banner[] }>("/api/banners/active");
+  const { data } = await apiClient.get<{ code: number; data: Banner[] }>("/banners/active");
   return data.data;
 }
 
 export async function getBannerById(id: string): Promise<Banner | null> {
   try {
-    const { data } = await apiClient.get<{ code: number; data: Banner }>(`/api/banners/${id}`);
+    const { data } = await apiClient.get<{ code: number; data: Banner }>(`/banners/${id}`);
     return data.data;
   } catch {
     return null;
@@ -27,7 +27,7 @@ export async function getAllBanners(params?: { page?: number; size?: number; isA
       totalElements: number;
       data: Banner[];
     };
-  }>("/api/banners", {
+  }>("/banners", {
     params: {
       page: params?.page ?? 1,
       size: params?.size ?? 20,
@@ -53,7 +53,7 @@ export async function createBanner(payload: {
   formData.append("position", payload.position);
   if (payload.sortOrder !== undefined) formData.append("sortOrder", String(payload.sortOrder));
 
-  const { data } = await apiClient.post<{ code: number; data: Banner }>("/api/banners", formData, {
+  const { data } = await apiClient.post<{ code: number; data: Banner }>("/banners", formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
   return data.data;
@@ -78,20 +78,20 @@ export async function updateBanner(
   formData.append("position", payload.position);
   formData.append("sortOrder", String(payload.sortOrder));
 
-  const { data } = await apiClient.put<{ code: number; data: Banner }>(`/api/banners/${id}`, formData, {
+  const { data } = await apiClient.put<{ code: number; data: Banner }>(`/banners/${id}`, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
   return data.data;
 }
 
 export async function updateBannerStatus(id: string, active: boolean) {
-  const { data } = await apiClient.patch<{ code: number; data: Banner }>(`/api/banners/${id}/status`, {
+  const { data } = await apiClient.patch<{ code: number; data: Banner }>(`/banners/${id}/status`, {
     active,
   });
   return data.data;
 }
 
 export async function deleteBanner(id: string) {
-  const { data } = await apiClient.delete<{ code: number; message: string }>(`/api/banners/${id}`);
+  const { data } = await apiClient.delete<{ code: number; message: string }>(`/banners/${id}`);
   return data;
 }

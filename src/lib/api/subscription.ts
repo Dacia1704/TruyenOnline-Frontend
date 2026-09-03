@@ -62,17 +62,17 @@ export interface Transaction {
 }
 
 export async function getSubscriptionPlans() {
-  const { data } = await apiClient.get<{ code: number; data: SubscriptionPlan[] }>("/api/subscription-plan");
+  const { data } = await apiClient.get<{ code: number; data: SubscriptionPlan[] }>("/subscription-plan");
   return data.data;
 }
 
 export async function getSubscriptionPlan(code: string) {
-  const { data } = await apiClient.get<{ code: number; data: SubscriptionPlan }>(`/api/subscription-plan/${code}`);
+  const { data } = await apiClient.get<{ code: number; data: SubscriptionPlan }>(`/subscription-plan/${code}`);
   return data.data;
 }
 
 export async function createPayment(planId: string, orderInfo?: string) {
-  const { data } = await apiClient.post<{ code: number; data: CreatePaymentResponse }>("/api/payment/create", {
+  const { data } = await apiClient.post<{ code: number; data: CreatePaymentResponse }>("/payment/create", {
     planId,
     orderInfo: orderInfo ?? `Mua goi ${planId}`,
   });
@@ -80,7 +80,7 @@ export async function createPayment(planId: string, orderInfo?: string) {
 }
 
 export async function getMyTransactions(): Promise<Transaction[]> {
-  const { data } = await apiClient.get<{ code: number; data: Transaction[] }>("/api/payment/transactions/me");
+  const { data } = await apiClient.get<{ code: number; data: Transaction[] }>("/payment/transactions/me");
   return data.data ?? [];
 }
 
@@ -92,14 +92,14 @@ export async function getTransactions(
   const params: Record<string, string | number> = { page, size };
   if (userId) params.userId = userId;
 
-  const { data } = await apiClient.get<{ code: number; data: PageResponse<Transaction> }>("/api/payment/transactions", {
+  const { data } = await apiClient.get<{ code: number; data: PageResponse<Transaction> }>("/payment/transactions", {
     params,
   });
   return data.data;
 }
 
 export async function getMySubscription() {
-  const { data } = await apiClient.get<{ code: number; data: SubscriptionResponse | null }>("/api/subscription/me");
+  const { data } = await apiClient.get<{ code: number; data: SubscriptionResponse | null }>("/subscription/me");
   return data.data;
 }
 
@@ -112,7 +112,7 @@ export async function createSubscriptionPlan(payload: {
   durationDays: number;
   sortOrder?: number;
 }) {
-  const { data } = await apiClient.post<{ code: number; data: SubscriptionPlan }>("/api/subscription-plan", payload);
+  const { data } = await apiClient.post<{ code: number; data: SubscriptionPlan }>("/subscription-plan", payload);
   return data.data;
 }
 
@@ -128,13 +128,13 @@ export async function updateSubscriptionPlan(
   },
 ) {
   const { data } = await apiClient.patch<{ code: number; data: SubscriptionPlan }>(
-    `/api/subscription-plan/${code}`,
+    `/subscription-plan/${code}`,
     payload,
   );
   return data.data;
 }
 
 export async function deleteSubscriptionPlan(code: string) {
-  const { data } = await apiClient.delete<{ code: number; message: string }>(`/api/subscription-plan/${code}`);
+  const { data } = await apiClient.delete<{ code: number; message: string }>(`/subscription-plan/${code}`);
   return data;
 }
