@@ -1,20 +1,7 @@
 import type { Banner } from "@/lib/types/stories";
 import { apiClient } from "./client";
 
-// ============ Banners ============
-
-export interface Banner {
-  id: string;
-  title: string;
-  bannerUrl: string;
-  linkUrl?: string;
-  position: "HOME_HERO" | "POPUP";
-  sortOrder: number;
-  isActive: boolean;
-  clickCount?: number;
-  createdAt?: string;
-  updatedAt?: string;
-}
+export type { Banner };
 
 export async function getActiveBanners(): Promise<Banner[]> {
   const { data } = await apiClient.get<{ code: number; data: Banner[] }>("/api/banners/active");

@@ -1,12 +1,12 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { PageLayout } from "@/components/PageLayout";
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { getSubscriptionPlans, SubscriptionPlan } from "@/lib/api/subscription";
 import { getUserInfo } from "@/lib/api/client";
 import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 
 const planBenefits: Record<string, string[]> = {
   "1": ["Truy cập tất cả nội dung premium", "Đọc không quảng cáo", "Tốc độ tải nhanh"],
@@ -29,9 +29,11 @@ export default function PremiumPage() {
   const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [processingPlan, setProcessingPlan] = useState<string | null>(null);
+  const [user, setUser] = useState<ReturnType<typeof getUserInfo>>(null);
 
-  const user = getUserInfo();
+  useEffect(() => {
+    setUser(getUserInfo());
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -167,14 +169,14 @@ export default function PremiumPage() {
 
                   <button
                     onClick={() => handleSelectPlan(plan)}
-                    disabled={processingPlan === plan.code}
+                    disabled={false}
                     className={`mt-8 w-full rounded-xl py-3 font-semibold transition-all ${
                       isBestValue
                         ? "bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-600 hover:to-orange-600 shadow-lg shadow-amber-500/25"
                         : "bg-indigo-600 text-white hover:bg-indigo-700"
                     } disabled:opacity-50`}
                   >
-                    {processingPlan === plan.code ? "Đang xử lý..." : "Chọn gói này"}
+                    {"Chọn gói này"}
                   </button>
                 </div>
               );

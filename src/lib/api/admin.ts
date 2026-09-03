@@ -1,5 +1,6 @@
-import type { PageResponse, User } from "@/lib/types/stories";
+import type { PageResponse, Role, User } from "@/lib/types/stories";
 import { apiClient } from "./client";
+import { getStoriesAdmin } from "./stories";
 
 // ============ Users ============
 
@@ -133,4 +134,20 @@ export async function updateAuthor(
 export async function deleteAuthor(id: string) {
   const { data } = await apiClient.delete<{ code: number; message: string }>(`/api/authors/${id}`);
   return data;
+}
+
+export async function getAdminDashboard() {
+  const [users, stories, pending] = await Promise.all([
+    getUsers({ page: 1, size: 1 }),
+    getStoriesAdmin({ page: 1, size: 1 }),
+    apiClient.get<{ code: number; data: PageResponse<unknown> }>("/api/stories/publish-requests", {
+      params: { page: 1, size: 1, status: "PENDING" },
+    }),
+  ]);
+
+  return {
+    totalUsers: users.totalElements,
+    totalStories: stories.totalElements,
+    totalPendingRequests: pending.data.data.totalElements,
+  };
 }

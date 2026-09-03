@@ -50,7 +50,7 @@ export default function PlanDetailPage() {
     try {
       const result = await createPayment(code, `Mua ${plan?.name}`);
       window.location.href = result.paymentUrl;
-    } catch (err) {
+    } catch {
       toast.error("Không thể tạo thanh toán. Vui lòng thử lại.");
       setProcessing(false);
     }

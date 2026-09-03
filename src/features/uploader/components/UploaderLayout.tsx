@@ -5,10 +5,8 @@ import { Navbar } from "@/features/landing/components/Navbar";
 
 export function UploaderLayout({
   children,
-  maxWidth = "default",
 }: {
   children: React.ReactNode;
-  maxWidth?: "default" | "wide";
 }) {
   const router = useRouter();
 

@@ -22,12 +22,13 @@ export default function ReadingHistoryPage() {
   const loadHistory = async (pageNum: number) => {
     try {
       const response = await getMyReadingHistories({ page: pageNum, size: 10, type: "STORY" });
+      const items = response.data ?? [];
       if (pageNum === 0) {
-        setHistory(response.content);
+        setHistory(items);
       } else {
-        setHistory((prev) => [...prev, ...response.content]);
+        setHistory((prev) => [...prev, ...items]);
       }
-      setHasMore(!response.last);
+      setHasMore(response.currentPage < response.totalPages);
       setPage(pageNum);
     } catch (error) {
       console.error("Failed to load reading history:", error);
@@ -81,13 +82,13 @@ export default function ReadingHistoryPage() {
               {history.map((item) => (
                 <Link
                   key={item.id}
-                  href={`/stories/${item.story.slug}`}
+                  href={`/stories/${item.story?.slug ?? item.story?.id}`}
                   className="flex gap-4 p-4 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-blue-500/40 transition group"
                 >
                   <div className="relative w-20 h-28 flex-shrink-0 overflow-hidden rounded bg-gray-100 dark:bg-gray-700">
-                    {item.story.coverUrl ? (
+                    {item.story?.coverImageUrl ? (
                       <Image
-                        src={item.story.coverUrl}
+                        src={item.story.coverImageUrl}
                         alt={item.story.title}
                         fill
                         className="object-cover"
@@ -100,10 +101,10 @@ export default function ReadingHistoryPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-medium line-clamp-2 group-hover:text-blue-500 transition">
-                      {item.story.title}
+                      {item.story?.title}
                     </h3>
                     <p className="text-sm text-muted-foreground mt-1">
-                      {formatViews(item.story.viewCount ?? 0)} lượt đọc • {item.story.followCount ?? 0} theo dõi
+                      {formatViews(item.story?.viewCount ?? 0)} lượt đọc • {item.story?.followCount ?? 0} theo dõi
                     </p>
                     {item.lastChapter && (
                       <p className="text-sm text-blue-500 mt-2">

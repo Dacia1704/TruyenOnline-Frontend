@@ -68,7 +68,7 @@ export function FeaturedCarousel() {
             next = 0;
             track.style.transition = "none";
             track.style.transform = `translateX(0px)`;
-            track.offsetHeight;
+            void track.offsetHeight;
           }
           goTo(next);
         }
@@ -96,13 +96,12 @@ export function FeaturedCarousel() {
     const track = trackRef.current;
     if (!track || stories.length === 0) return;
 
-    const gap = 16;
     let next = currentIndexRef.current + 1;
     if (next >= halfLengthRef.current) {
       next = 0;
       track.style.transition = "none";
       track.style.transform = `translateX(0px)`;
-      track.offsetHeight;
+      void track.offsetHeight;
     }
     track.style.transition = "transform 0.5s ease-in-out";
     track.style.transform = `translateX(-${next * stepWidthRef.current}px)`;

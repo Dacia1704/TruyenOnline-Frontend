@@ -14,6 +14,8 @@ import type {
 } from "@/lib/types/stories";
 import { apiClient } from "./client";
 
+export type { StoryPublishRequestStatus };
+
 // ============ Stories ============
 
 export async function getStories(params: {
@@ -23,6 +25,7 @@ export async function getStories(params: {
   uploaderId?: string;
   type?: StoryType;
   status?: StoryStatus;
+  isPublished?: boolean;
   sortType?: "NEWEST" | "UPDATED" | "VIEW" | "FOLLOW" | "ALPHABET_ASC" | "ALPHABET_DESC" | "OLDEST";
   genres?: string[];
 }) {
@@ -33,6 +36,7 @@ export async function getStories(params: {
       uploaderId: params.uploaderId,
       type: params.type,
       status: params.status,
+      isPublished: params.isPublished,
       sortType: params.sortType,
       genres: params.genres,
     },
@@ -661,6 +665,10 @@ export interface ModerationAction {
   id: string;
   objectId: string;
   objectType: ModerationObjectType;
+  storyResponse?: Story;
+  chapterResponse?: Chapter;
+  userResponse?: User;
+  commentResponse?: Comment;
   actionType: ModerationActionType;
   violationType?: ViolationType;
   reason?: string;

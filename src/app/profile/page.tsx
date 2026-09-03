@@ -1,5 +1,7 @@
 "use client";
 
+export const dynamic = "force-dynamic";
+
 import { PageLayout } from "@/components/PageLayout";
 import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
@@ -22,6 +24,7 @@ interface UserProfile {
 
 export default function ProfilePage() {
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [currentUser, setCurrentUser] = useState<ReturnType<typeof getUserInfo>>(null);
   const [subscription, setSubscription] = useState<SubscriptionResponse | null>(null);
   const [activeTab, setActiveTab] = useState<ActiveTab>("info");
   const [loading, setLoading] = useState(true);
@@ -59,6 +62,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const info = getUserInfo();
+    setCurrentUser(info);
     if (info) {
       setUser({
         username: info.username,
@@ -193,9 +197,8 @@ export default function ProfilePage() {
     try {
       const result = await upgradeToUploader();
       if (result.code === 200) {
-        const { accessToken, refreshToken, ...userData } = result.data;
-        setAccessToken(accessToken);
-        setRefreshToken(refreshToken);
+        setAccessToken(result.data.accessToken);
+        setRefreshToken(result.data.refreshToken);
         setUserInfo(result.data);
         toast.success("Nâng cấp thành Uploader thành công!");
         window.location.reload();
@@ -284,7 +287,6 @@ export default function ProfilePage() {
     return new Intl.NumberFormat("vi-VN").format(price) + "đ";
   };
 
-  const currentUser = getUserInfo();
   const isUploader = currentUser?.roles?.includes("UPLOADER");
 
   return (

@@ -38,7 +38,7 @@ export function LoginForm() {
     try {
       const result = await loginWithGoogle({ idToken: response.credential });
       if (result.code === 200) {
-        const { accessToken, refreshToken, ...userData } = result.data;
+        const { accessToken, refreshToken } = result.data;
         setAccessToken(accessToken);
         setRefreshToken(refreshToken);
         setUserInfo(result.data);
@@ -58,14 +58,11 @@ export function LoginForm() {
     const timeoutId = setTimeout(() => {
       const button = document.getElementById("google-signin-button");
       if (button && !button.innerHTML) {
-        // @ts-expect-error google is loaded from script
         if (window.google?.accounts?.id) {
-          // @ts-expect-error google is loaded from script
           window.google.accounts.id.initialize({
             client_id: GOOGLE_CLIENT_ID,
             callback: handleGoogleResponse,
           });
-          // @ts-expect-error google is loaded from script
           window.google.accounts.id.renderButton(button, {
             theme: "outline",
             size: "large",

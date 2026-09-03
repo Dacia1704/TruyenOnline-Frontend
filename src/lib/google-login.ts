@@ -50,16 +50,13 @@ export async function triggerGoogleLogin(): Promise<string | null> {
 
   return new Promise((resolve) => {
     const timeoutId = setTimeout(() => {
-      // @ts-expect-error google is loaded from script
       if (window.google?.accounts?.id) {
-        // @ts-expect-error google is loaded from script
         window.google.accounts.id.initialize({
           client_id: GOOGLE_CLIENT_ID,
           callback: (response: { credential: string }) => {
             resolve(response.credential);
           },
         });
-        // @ts-expect-error google is loaded from script
         window.google.accounts.id.prompt();
       } else {
         resolve(null);

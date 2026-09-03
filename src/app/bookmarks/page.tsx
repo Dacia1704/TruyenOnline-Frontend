@@ -5,11 +5,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { PageLayout } from "@/components/PageLayout";
 import { getMyBookmarks } from "@/lib/api/stories";
-import type { BookmarkResponse } from "@/lib/types/stories";
+import type { Bookmark } from "@/lib/types/stories";
 import { formatViews } from "@/lib/utils";
 
 export default function BookmarksPage() {
-  const [bookmarks, setBookmarks] = useState<BookmarkResponse[]>([]);
+  const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -22,12 +22,13 @@ export default function BookmarksPage() {
   const loadBookmarks = async (pageNum: number) => {
     try {
       const response = await getMyBookmarks({ page: pageNum, size: 10 });
+      const items = response.data ?? [];
       if (pageNum === 0) {
-        setBookmarks(response.content);
+        setBookmarks(items);
       } else {
-        setBookmarks((prev) => [...prev, ...response.content]);
+        setBookmarks((prev) => [...prev, ...items]);
       }
-      setHasMore(!response.last);
+      setHasMore(response.currentPage < response.totalPages);
       setPage(pageNum);
     } catch (error) {
       console.error("Failed to load bookmarks:", error);
@@ -77,14 +78,14 @@ export default function BookmarksPage() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {bookmarks.map((bookmark) => (
                 <Link
-                  key={bookmark.story.id}
-                  href={`/stories/${bookmark.story.slug}`}
+                  key={bookmark.story?.id ?? bookmark.id}
+                  href={`/stories/${bookmark.story?.slug ?? bookmark.story?.id}`}
                   className="group"
                 >
                   <div className="relative aspect-[3/4] overflow-hidden rounded-lg bg-gray-100 dark:bg-gray-800">
-                    {bookmark.story.coverUrl ? (
+                    {bookmark.story?.coverImageUrl ? (
                       <Image
-                        src={bookmark.story.coverUrl}
+                        src={bookmark.story.coverImageUrl}
                         alt={bookmark.story.title}
                         fill
                         className="object-cover transition-transform group-hover:scale-105"
@@ -96,10 +97,10 @@ export default function BookmarksPage() {
                     )}
                   </div>
                   <h3 className="mt-2 text-sm font-medium line-clamp-2 group-hover:text-blue-500">
-                    {bookmark.story.title}
+                    {bookmark.story?.title}
                   </h3>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {formatViews(bookmark.story.viewCount ?? 0)} lượt đọc
+                    {formatViews(bookmark.story?.viewCount ?? 0)} lượt đọc
                   </p>
                 </Link>
               ))}

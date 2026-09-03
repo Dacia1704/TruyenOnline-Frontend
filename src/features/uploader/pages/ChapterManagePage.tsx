@@ -109,7 +109,7 @@ export default function ChapterManagePage() {
   const startEdit = (chapter: Chapter) => {
     setEditingId(chapter.id);
     setEditForm({
-      title: chapter.title,
+      title: chapter.title ?? "",
       chapterNumber: String(chapter.chapterNumber),
       isPublished: chapter.isPublished,
     });

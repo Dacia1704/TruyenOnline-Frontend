@@ -237,7 +237,7 @@ export default function ChapterContentManagerPage() {
   }
 
   return (
-    <UploaderLayout maxWidth="wide">
+    <UploaderLayout>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Quản lý nội dung chương</h1>

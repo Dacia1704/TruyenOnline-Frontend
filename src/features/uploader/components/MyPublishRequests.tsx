@@ -6,6 +6,7 @@ import { UploaderLayout } from "./UploaderLayout";
 import { deletePublishRequest, getMyPublishRequests, type StoryPublishRequestStatus } from "@/lib/api/stories";
 
 export function MyPublishRequests() {
+  const router = useRouter();
   const [requests, setRequests] = useState<{ id: string; story: { id: string; title: string }; requesterNote?: string; status: StoryPublishRequestStatus }[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -33,7 +34,7 @@ export function MyPublishRequests() {
       setError(null);
       try {
         const data = await getMyPublishRequests({ size: 20 });
-        setRequests(data.data?.data ?? []);
+        setRequests(data ?? []);
       } catch {
         setError("Không tải được danh sách yêu cầu xuất bản.");
         setRequests([]);

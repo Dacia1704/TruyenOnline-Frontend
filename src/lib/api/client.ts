@@ -1,5 +1,5 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
-import type { ApiResponse, RefreshTokenResponse } from "../types/api";
+import type { ApiResponse, AuthTokenResponse, RefreshTokenResponse } from "../types/api";
 import { LoginResponse } from "../types/auth";
 import { toast } from "@/lib/toast";
 import { getSessionId } from "./session";
@@ -159,7 +159,7 @@ export function setRefreshToken(token: string) {
   localStorage.setItem("refreshToken", token);
 }
 
-export function setUserInfo(userInfo: LoginResponse) {
+export function setUserInfo(userInfo: LoginResponse | AuthTokenResponse) {
   localStorage.setItem("userInfo", JSON.stringify(userInfo));
 }
 

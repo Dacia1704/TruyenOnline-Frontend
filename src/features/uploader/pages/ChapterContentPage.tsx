@@ -6,7 +6,6 @@ import { UploaderLayout } from "../components/UploaderLayout";
 import {
   getChapter,
   getChapterPages,
-  updateChapter,
   updateChapterContent,
   deleteAllPages,
 } from "@/lib/api/stories";
@@ -82,7 +81,6 @@ export default function ChapterContentPage() {
   };
 
   const handleRemovePending = (index: number) => {
-    setRemovingPreview(index);
     setTimeout(() => {
       setPendingFiles((prev) => prev.filter((_, i) => i !== index));
       setPreviewUrls((prev) => {
@@ -90,7 +88,6 @@ export default function ChapterContentPage() {
         delete next[index];
         return next;
       });
-      setRemovingPreview(null);
     }, 200);
   };
 
