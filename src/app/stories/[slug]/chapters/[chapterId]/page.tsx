@@ -118,7 +118,8 @@ export default function ChapterReadPage() {
     setSubmittingComment(true);
     try {
       await createComment({
-        chapterId,
+        storyId: chapter?.story?.id,
+        chapterId: chapterId,
         content: newComment.trim(),
       });
       setNewComment("");
@@ -470,7 +471,7 @@ export default function ChapterReadPage() {
                 Chưa có bình luận nào.
               </p>
             ) : (
-              <CommentsList comments={comments} chapterId={chapterId} onReload={loadComments} />
+              <CommentsList comments={comments} storyId={chapter?.story?.id} chapterId={chapterId} onReload={loadComments} />
             )}
           </div>
         </div>
