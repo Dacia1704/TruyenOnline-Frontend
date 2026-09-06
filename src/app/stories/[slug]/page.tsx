@@ -359,6 +359,8 @@ export default function StoryDetailPage() {
 
   // Handle clicking on chapter (premium or free)
   const handleChapterClick = (chapter: Chapter) => {
+    if (!story) return;
+
     const isPremiumChapter =
       story.freeChapterLimit !== null &&
       story.freeChapterLimit !== undefined &&
