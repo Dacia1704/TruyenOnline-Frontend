@@ -2,23 +2,21 @@ import Link from "next/link";
 import type { Story, StoryPublishRequestStatus } from "@/lib/types/stories";
 
 const storyTypeLabel: Record<string, string> = {
-  COMICS: "Truyện tranh",
-  MANHWA: "Manhwa",
-  MANHUA: "Manhua",
+  MANGA: "Truyện tranh",
   NOVEL: "Light novel",
 };
 
 const statusLabel: Record<string, { text: string; className: string }> = {
-  ONGOING: { text: "Đang ra", className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400" },
+  ONGOING: {
+    text: "Đang ra",
+    className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-400",
+  },
   COMPLETED: { text: "Hoàn thành", className: "bg-sky-100 text-sky-700" },
   HIATUS: { text: "Tạm dừng", className: "bg-amber-100 text-amber-700" },
-  CANCELLED: { text: "Đã hủy", className: "bg-rose-100 text-rose-700" },
+  DROPPED: { text: "Bỏ dở", className: "bg-rose-100 text-rose-700" },
 };
 
-const publishStatusConfig: Record<
-  StoryPublishRequestStatus,
-  { text: string; className: string; icon: JSX.Element }
-> = {
+const publishStatusConfig: Record<StoryPublishRequestStatus, { text: string; className: string; icon: JSX.Element }> = {
   PENDING: {
     text: "Chờ phê duyệt",
     className:
@@ -69,7 +67,12 @@ interface StoryCardProps {
   publishRequestStatus?: StoryPublishRequestStatus;
   publishRequestNote?: string;
   publishRequestId?: string;
-  onViewPublishRequestDetail?: (requesterNote?: string, reviewerNote?: string, reviewerName?: string, requestId?: string) => void;
+  onViewPublishRequestDetail?: (
+    requesterNote?: string,
+    reviewerNote?: string,
+    reviewerName?: string,
+    requestId?: string,
+  ) => void;
 }
 
 export function StoryCard({
@@ -93,9 +96,7 @@ export function StoryCard({
     <Link
       href={storyHref}
       className={`rounded-2xl border bg-card p-4 flex gap-4 transition cursor-pointer hover:border-indigo-500/40 ${
-        story.isBanned
-          ? "border-red-300 dark:border-red-800 bg-red-50/50 dark:bg-red-950/30"
-          : "border-border"
+        story.isBanned ? "border-red-300 dark:border-red-800 bg-red-50/50 dark:bg-red-950/30" : "border-border"
       }`}
     >
       <div className="hidden sm:block w-24 h-36 shrink-0 overflow-hidden rounded-xl bg-muted relative">
@@ -128,9 +129,7 @@ export function StoryCard({
         <div className="flex items-center justify-between gap-3">
           <div>
             <h3 className="font-semibold truncate">{story.title}</h3>
-            <p className="text-sm text-muted-foreground">
-              {storyTypeLabel[story.storyType] ?? story.storyType}
-            </p>
+            <p className="text-sm text-muted-foreground">{storyTypeLabel[story.storyType] ?? story.storyType}</p>
           </div>
           <div className="flex items-center gap-2 flex-wrap justify-end">
             {story.isPublished && (
@@ -159,7 +158,9 @@ export function StoryCard({
               </span>
             )}
             {/* Status tag */}
-            <span className={`shrink-0 inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${status.className}`}>
+            <span
+              className={`shrink-0 inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium ${status.className}`}
+            >
               {status.text}
             </span>
             {/* Publish request status tag (clickable for PENDING/REJECTED) */}
@@ -181,9 +182,7 @@ export function StoryCard({
           </div>
         </div>
 
-        <p className="mt-3 text-sm text-muted-foreground line-clamp-2">
-          {story.description ?? "Chưa có mô tả."}
-        </p>
+        <p className="mt-3 text-sm text-muted-foreground line-clamp-2">{story.description ?? "Chưa có mô tả."}</p>
 
         <div className="mt-4 flex flex-wrap items-center gap-3">
           {story.isBanned && onViewBanReason && (
@@ -260,12 +259,7 @@ export function StoryCard({
           )}
           <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-              />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"

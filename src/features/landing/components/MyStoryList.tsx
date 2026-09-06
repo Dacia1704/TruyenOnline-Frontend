@@ -6,9 +6,7 @@ import { getMyInfo, getStoriesAdmin } from "@/lib/api/stories";
 import type { Story } from "@/lib/types/stories";
 
 const storyTypeLabel: Record<string, string> = {
-  COMICS: "Truyện tranh",
-  MANHWA: "Manhwa",
-  MANHUA: "Manhua",
+  MANGA: "Truyện tranh",
   NOVEL: "Light novel",
 };
 
@@ -16,7 +14,7 @@ const statusConfig: Record<string, { text: string; className: string }> = {
   ONGOING: { text: "Đang ra", className: "bg-emerald-100 text-emerald-700" },
   COMPLETED: { text: "Hoàn thành", className: "bg-sky-100 text-sky-700" },
   HIATUS: { text: "Tạm dừng", className: "bg-amber-100 text-amber-700" },
-  CANCELLED: { text: "Đã hủy", className: "bg-rose-100 text-rose-700" },
+  DROPPED: { text: "Bỏ dở", className: "bg-rose-100 text-rose-700" },
 };
 
 export function MyStoryList() {
@@ -84,7 +82,11 @@ export function MyStoryList() {
                   <img src={story.coverImageUrl} alt={story.title} className="h-full w-full object-cover" />
                 ) : (
                   <div className="h-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center">
-                    <img src="/images/icon/main.png" alt="placeholder" className="w-12 h-12 object-contain opacity-50" />
+                    <img
+                      src="/images/icon/main.png"
+                      alt="placeholder"
+                      className="w-12 h-12 object-contain opacity-50"
+                    />
                   </div>
                 )}
                 {story.isBanned && (

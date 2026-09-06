@@ -102,11 +102,16 @@ export default function StoryFormPage({ storyId }: StoryFormPageProps) {
               setSelectedGenres((story as unknown as { genreIds: number[] }).genreIds);
             }
             // Load existing authors from story
-            const storyAuthors = (story as unknown as { authors?: Array<{
-              authorResponse?: Author;
-              authorRole?: AuthorRole;
-              sortOrder?: number;
-            }> }).authors ?? [];
+            const storyAuthors =
+              (
+                story as unknown as {
+                  authors?: Array<{
+                    authorResponse?: Author;
+                    authorRole?: AuthorRole;
+                    sortOrder?: number;
+                  }>;
+                }
+              ).authors ?? [];
             const mapped: SelectedAuthor[] = storyAuthors
               .filter((sa) => sa.authorResponse)
               .map((sa) => ({
@@ -166,9 +171,7 @@ export default function StoryFormPage({ storyId }: StoryFormPageProps) {
   };
 
   const handleAuthorRoleChange = (authorId: string, role: AuthorRole) => {
-    setSelectedAuthors((prev) =>
-      prev.map((sa) => (sa.authorId === authorId ? { ...sa, role } : sa)),
-    );
+    setSelectedAuthors((prev) => prev.map((sa) => (sa.authorId === authorId ? { ...sa, role } : sa)));
   };
 
   const handleCreateAuthor = async () => {
@@ -265,8 +268,7 @@ export default function StoryFormPage({ storyId }: StoryFormPageProps) {
 
   const filteredAuthors = allAuthors.filter(
     (a) =>
-      a.name.toLowerCase().includes(authorSearch.toLowerCase()) &&
-      !selectedAuthors.some((sa) => sa.authorId === a.id),
+      a.name.toLowerCase().includes(authorSearch.toLowerCase()) && !selectedAuthors.some((sa) => sa.authorId === a.id),
   );
 
   return (
@@ -309,7 +311,7 @@ export default function StoryFormPage({ storyId }: StoryFormPageProps) {
               className="mt-1.5 w-full rounded-lg border border-border bg-background px-4 py-2.5 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
             >
               <option value="NOVEL">Light novel</option>
-              <option value="COMICS">Truyện tranh</option>
+              <option value="MANGA">Truyện tranh</option>
             </select>
           </div>
           <div>
@@ -323,7 +325,7 @@ export default function StoryFormPage({ storyId }: StoryFormPageProps) {
               <option value="ONGOING">Đang ra</option>
               <option value="COMPLETED">Hoàn thành</option>
               <option value="HIATUS">Tạm dừng</option>
-              <option value="CANCELLED">Đã hủy</option>
+              <option value="DROPPED">Bỏ dở</option>
             </select>
           </div>
         </div>
@@ -437,9 +439,7 @@ export default function StoryFormPage({ storyId }: StoryFormPageProps) {
                         </div>
                         <div className="min-w-0">
                           <p className="truncate font-medium">{author.name}</p>
-                          {author.country && (
-                            <p className="text-xs text-muted-foreground">{author.country}</p>
-                          )}
+                          {author.country && <p className="text-xs text-muted-foreground">{author.country}</p>}
                         </div>
                       </button>
                     ))}

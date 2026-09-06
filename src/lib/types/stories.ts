@@ -1,5 +1,5 @@
-export type StoryType = "COMICS" | "MANHWA" | "MANHUA" | "NOVEL";
-export type StoryStatus = "ONGOING" | "COMPLETED" | "HIATUS" | "CANCELLED";
+export type StoryType = "MANGA" | "NOVEL";
+export type StoryStatus = "ONGOING" | "COMPLETED" | "HIATUS" | "DROPPED";
 
 export interface Author {
   id: string;

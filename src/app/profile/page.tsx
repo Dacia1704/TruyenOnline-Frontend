@@ -8,7 +8,7 @@ import Link from "next/link";
 import { getUserInfo, setUserInfo, clearTokens, setAccessToken, setRefreshToken, apiClient } from "@/lib/api/client";
 import { upgradeToUploader } from "@/lib/api/user";
 import { logoutAllDevices } from "@/lib/api/auth";
-import { getMyReadingHistories } from "@/lib/api/stories";
+import { getMyReadingHistories, deleteAllReadingHistories } from "@/lib/api/stories";
 import { ReadingHistory } from "@/lib/types/stories";
 import { getMySubscription, getMyTransactions, SubscriptionResponse, Transaction } from "@/lib/api/subscription";
 import { getMySocialAccounts, linkGoogleAccount, unlinkGoogleAccount, SocialAccount } from "@/lib/api/auth";
@@ -43,6 +43,7 @@ export default function ProfilePage() {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyPage, setHistoryPage] = useState(1);
   const [historyTotalPages, setHistoryTotalPages] = useState(1);
+  const [clearingHistory, setClearingHistory] = useState(false);
 
   // Transactions tab state
   const [myTransactions, setMyTransactions] = useState<Transaction[]>([]);
@@ -269,6 +270,20 @@ export default function ProfilePage() {
       toast.error("Không thể hủy liên kết Google");
     } finally {
       setUnlinkingGoogle(false);
+    }
+  };
+
+  const handleClearAllHistory = async () => {
+    if (!confirm("Bạn có chắc muốn xóa toàn bộ lịch sử đọc truyện?")) return;
+    setClearingHistory(true);
+    try {
+      await deleteAllReadingHistories();
+      setHistories([]);
+      toast.success("Đã xóa lịch sử đọc truyện");
+    } catch {
+      toast.error("Không thể xóa lịch sử đọc truyện");
+    } finally {
+      setClearingHistory(false);
     }
   };
 
@@ -738,21 +753,41 @@ export default function ProfilePage() {
                 <div>
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-lg font-semibold text-foreground">Lịch sử đọc truyện</h2>
-                    <button
-                      type="button"
-                      onClick={() => loadHistories(historyPage)}
-                      className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                        />
-                      </svg>
-                      Tải lại
-                    </button>
+                    <div className="flex items-center gap-2">
+                      {histories.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={handleClearAllHistory}
+                          disabled={clearingHistory}
+                          className="flex items-center gap-1 text-sm text-red-500 hover:text-red-600 transition disabled:opacity-50"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
+                          </svg>
+                          Xóa tất cả
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => loadHistories(historyPage)}
+                        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                          />
+                        </svg>
+                        Tải lại
+                      </button>
+                    </div>
                   </div>
 
                   {historyLoading ? (

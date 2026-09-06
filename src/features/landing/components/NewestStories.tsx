@@ -7,9 +7,7 @@ import type { Story } from "@/lib/types/stories";
 import { Sidebar } from "./Sidebar";
 
 const storyTypeLabel: Record<string, string> = {
-  COMICS: "Truyện tranh",
-  MANHWA: "Manhwa",
-  MANHUA: "Manhua",
+  MANGA: "Truyện tranh",
   NOVEL: "Light novel",
 };
 
@@ -17,7 +15,7 @@ const statusConfig: Record<string, { text: string; className: string }> = {
   ONGOING: { text: "Đang ra", className: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" },
   COMPLETED: { text: "Hoàn thành", className: "bg-sky-500/20 text-sky-400 border border-sky-500/30" },
   HIATUS: { text: "Tạm dừng", className: "bg-amber-500/20 text-amber-400 border border-amber-500/30" },
-  CANCELLED: { text: "Đã hủy", className: "bg-rose-500/20 text-rose-400 border border-rose-500/30" },
+  DROPPED: { text: "Bỏ dở", className: "bg-rose-500/20 text-rose-400 border border-rose-500/30" },
 };
 
 export function NewestStories() {

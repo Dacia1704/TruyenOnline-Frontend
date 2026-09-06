@@ -9,7 +9,7 @@ const statusConfig: Record<string, { text: string; className: string }> = {
   ONGOING: { text: "Đang ra", className: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" },
   COMPLETED: { text: "Hoàn thành", className: "bg-sky-500/20 text-sky-400 border border-sky-500/30" },
   HIATUS: { text: "Tạm dừng", className: "bg-amber-500/20 text-amber-400 border border-amber-500/30" },
-  CANCELLED: { text: "Đã hủy", className: "bg-rose-500/20 text-rose-400 border border-rose-500/30" },
+  DROPPED: { text: "Bỏ dở", className: "bg-rose-500/20 text-rose-400 border border-rose-500/30" },
 };
 
 function formatRelativeTime(dateString?: string): string {
@@ -78,7 +78,12 @@ export function Sidebar() {
         <div className="px-4 py-3 border-b border-border dark:border-white/10 bg-muted/50 dark:bg-slate-900/50">
           <h3 className="font-semibold text-foreground dark:text-white flex items-center gap-2">
             <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
             Lịch sử đọc truyện
           </h3>
@@ -100,7 +105,12 @@ export function Sidebar() {
           ) : readingHistories.length === 0 ? (
             <div className="text-center py-6 text-sm text-muted-foreground dark:text-slate-400">
               <svg className="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+                />
               </svg>
               <p>Chưa có lịch sử đọc truyện</p>
               <p className="text-xs mt-1">Hãy bắt đầu đọc truyện để xem tại đây</p>
@@ -122,7 +132,11 @@ export function Sidebar() {
                       />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <img src="/images/icon/main.png" alt="placeholder" className="w-6 h-6 object-contain opacity-50" />
+                        <img
+                          src="/images/icon/main.png"
+                          alt="placeholder"
+                          className="w-6 h-6 object-contain opacity-50"
+                        />
                       </div>
                     )}
                   </div>
@@ -158,7 +172,12 @@ export function Sidebar() {
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+              />
             </svg>
             Top View
           </button>
@@ -171,7 +190,12 @@ export function Sidebar() {
             }`}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+              />
             </svg>
             Top Follow
           </button>
@@ -191,9 +215,7 @@ export function Sidebar() {
               ))}
             </div>
           ) : topStories.length === 0 ? (
-            <div className="text-center py-6 text-sm text-muted-foreground dark:text-slate-400">
-              Không có dữ liệu
-            </div>
+            <div className="text-center py-6 text-sm text-muted-foreground dark:text-slate-400">Không có dữ liệu</div>
           ) : (
             <div className="space-y-2">
               {topStories.slice(0, 10).map((story, index) => (
@@ -220,7 +242,11 @@ export function Sidebar() {
                       <img src={story.coverImageUrl} alt={story.title} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center">
-                        <img src="/images/icon/main.png" alt="placeholder" className="w-5 h-5 object-contain opacity-50" />
+                        <img
+                          src="/images/icon/main.png"
+                          alt="placeholder"
+                          className="w-5 h-5 object-contain opacity-50"
+                        />
                       </div>
                     )}
                   </div>

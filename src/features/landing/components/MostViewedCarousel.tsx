@@ -9,7 +9,7 @@ const statusConfig: Record<string, { text: string; className: string }> = {
   ONGOING: { text: "Đang ra", className: "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30" },
   COMPLETED: { text: "Hoàn thành", className: "bg-sky-500/20 text-sky-400 border border-sky-500/30" },
   HIATUS: { text: "Tạm dừng", className: "bg-amber-500/20 text-amber-400 border border-amber-500/30" },
-  CANCELLED: { text: "Đã hủy", className: "bg-rose-500/20 text-rose-400 border border-rose-500/30" },
+  DROPPED: { text: "Bỏ dở", className: "bg-rose-500/20 text-rose-400 border border-rose-500/30" },
 };
 
 export function FeaturedCarousel() {
@@ -31,7 +31,7 @@ export function FeaturedCarousel() {
       try {
         const result = await getStories({ isPublished: true, size: 20, sortType: "VIEW" });
         const data = result.data ?? [];
-        setStories([...data, ...data]);
+        setStories([...data]);
       } catch {
         setError("Không tải được truyện đề cử.");
       } finally {
@@ -76,8 +76,12 @@ export function FeaturedCarousel() {
       }, 3000);
     };
 
-    const onMouseEnter = () => { isPaused.current = true; };
-    const onMouseLeave = () => { isPaused.current = false; };
+    const onMouseEnter = () => {
+      isPaused.current = true;
+    };
+    const onMouseLeave = () => {
+      isPaused.current = false;
+    };
 
     const container = containerRef.current;
     container?.addEventListener("mouseenter", onMouseEnter);
@@ -136,7 +140,12 @@ export function FeaturedCarousel() {
               className="p-2 rounded-full border border-border dark:border-white/20 bg-background dark:bg-white/5 hover:bg-muted dark:hover:bg-white/10 transition"
               aria-label="Cuộn trái"
             >
-              <svg className="w-5 h-5 text-foreground dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-5 h-5 text-foreground dark:text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
@@ -145,7 +154,12 @@ export function FeaturedCarousel() {
               className="p-2 rounded-full border border-border dark:border-white/20 bg-background dark:bg-white/5 hover:bg-muted dark:hover:bg-white/10 transition"
               aria-label="Cuộn phải"
             >
-              <svg className="w-5 h-5 text-foreground dark:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                className="w-5 h-5 text-foreground dark:text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>
@@ -160,11 +174,7 @@ export function FeaturedCarousel() {
 
         <div ref={containerRef} className="relative group/carousel">
           <div className="overflow-hidden">
-            <div
-              ref={trackRef}
-              className="flex gap-4 pb-4 px-2"
-              style={{ willChange: "transform" }}
-            >
+            <div ref={trackRef} className="flex gap-4 pb-4 px-2" style={{ willChange: "transform" }}>
               {loading &&
                 Array.from({ length: 8 }).map((_, index) => (
                   <div
@@ -191,7 +201,11 @@ export function FeaturedCarousel() {
                         <img src={story.coverImageUrl} alt={story.title} className="w-full h-full object-cover" />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-slate-700 to-slate-800 flex items-center justify-center">
-                          <img src="/images/icon/main.png" alt="placeholder" className="w-12 h-12 object-contain opacity-50" />
+                          <img
+                            src="/images/icon/main.png"
+                            alt="placeholder"
+                            className="w-12 h-12 object-contain opacity-50"
+                          />
                         </div>
                       )}
                     </div>

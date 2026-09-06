@@ -494,6 +494,11 @@ export async function deleteReadingHistory(id: string) {
   return data;
 }
 
+export async function deleteAllReadingHistories() {
+  const { data } = await apiClient.delete<{ code: number; message: string }>("/reading-histories");
+  return data;
+}
+
 // ============ Comments ============
 
 export async function getComments(params: { chapterId?: string; storyId?: string; page?: number; size?: number }) {

@@ -161,10 +161,7 @@ export default function ChapterManagePage() {
     setPreviewLoading(true);
     setShowPreview(true);
     try {
-      const [fullChapter, pages] = await Promise.all([
-        getChapter(chapter.id),
-        getChapterPages(chapter.id),
-      ]);
+      const [fullChapter, pages] = await Promise.all([getChapter(chapter.id), getChapterPages(chapter.id)]);
       setPreviewChapter(fullChapter);
       setPreviewPages(pages.length > 0 ? pages : []);
     } catch {
@@ -283,9 +280,7 @@ export default function ChapterManagePage() {
                   onClick={() => setChapterDropdownOpen((prev) => !prev)}
                   className="w-full rounded-lg border border-border bg-background px-3 py-2 text-left text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
                 >
-                  {selectedChapterIds.length === 0
-                    ? "Chọn chương..."
-                    : `Đã chọn ${selectedChapterIds.length} chương`}
+                  {selectedChapterIds.length === 0 ? "Chọn chương..." : `Đã chọn ${selectedChapterIds.length} chương`}
                 </button>
                 {chapterDropdownOpen && (
                   <div className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg border border-border bg-background shadow">
@@ -398,9 +393,7 @@ export default function ChapterManagePage() {
               <div className="flex items-center gap-3">
                 <span
                   className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                    chapter.isPublished
-                      ? "bg-emerald-100 text-emerald-700"
-                      : "bg-gray-100 text-gray-600"
+                    chapter.isPublished ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600"
                   }`}
                 >
                   {chapter.isPublished ? "Đã xuất bản" : "Bản nháp"}
@@ -409,9 +402,7 @@ export default function ChapterManagePage() {
                   <p className="font-semibold">
                     Chương {chapter.chapterNumber}: {chapter.title}
                   </p>
-                  <p className="text-sm text-muted-foreground">
-                    Số trang: {chapter.pageCount}
-                  </p>
+                  <p className="text-sm text-muted-foreground">Lượt xem: {chapter.viewCount}</p>
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -453,21 +444,21 @@ export default function ChapterManagePage() {
                     </button>
                   </>
                 ) : (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => handlePreviewChapter(chapter)}
-                    className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition hover:bg-muted"
-                  >
-                    Xem demo
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => router.push(`/uploader/stories/${storyId}/chapters/${chapter.id}/content`)}
-                    className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700"
-                  >
-                    Nội dung
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => handlePreviewChapter(chapter)}
+                      className="rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition hover:bg-muted"
+                    >
+                      Xem demo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => router.push(`/uploader/stories/${storyId}/chapters/${chapter.id}/content`)}
+                      className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-indigo-700"
+                    >
+                      Nội dung
+                    </button>
                     <button
                       type="button"
                       onClick={() => startEdit(chapter)}
@@ -519,11 +510,13 @@ export default function ChapterManagePage() {
                 </div>
               ) : previewPages.length > 0 ? (
                 <div className="space-y-4">
-                  {previewPages.sort((a, b) => a.pageNumber - b.pageNumber).map((page) => (
-                    <div key={page.id} className="bg-muted rounded overflow-hidden">
-                      <img src={page.imageUrl} alt={`Trang ${page.pageNumber}`} className="w-full h-auto" />
-                    </div>
-                  ))}
+                  {previewPages
+                    .sort((a, b) => a.pageNumber - b.pageNumber)
+                    .map((page) => (
+                      <div key={page.id} className="bg-muted rounded overflow-hidden">
+                        <img src={page.imageUrl} alt={`Trang ${page.pageNumber}`} className="w-full h-auto" />
+                      </div>
+                    ))}
                 </div>
               ) : previewChapter?.content ? (
                 <div
@@ -531,9 +524,7 @@ export default function ChapterManagePage() {
                   dangerouslySetInnerHTML={{ __html: previewChapter.content }}
                 />
               ) : (
-                <div className="text-center py-12 text-muted-foreground">
-                  Chương này chưa có nội dung.
-                </div>
+                <div className="text-center py-12 text-muted-foreground">Chương này chưa có nội dung.</div>
               )}
             </div>
           </div>

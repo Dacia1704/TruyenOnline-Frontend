@@ -26,7 +26,7 @@ const statusConfig: Record<string, { text: string; className: string }> = {
   ONGOING: { text: "Đang cập nhật", className: "bg-emerald-500/20 text-emerald-600" },
   COMPLETED: { text: "Hoàn thành", className: "bg-sky-500/20 text-sky-600" },
   HIATUS: { text: "Tạm dừng", className: "bg-amber-500/20 text-amber-600" },
-  CANCELLED: { text: "Đã hủy", className: "bg-rose-500/20 text-rose-600" },
+  DROPPED: { text: "Bỏ dở", className: "bg-rose-500/20 text-rose-600" },
 };
 
 const rankColors: Record<number, string> = {
@@ -340,10 +340,38 @@ export default function StoryDetailPage() {
   // Check if user is logged in
   const isLoggedIn = () => !!getUserInfo();
 
-  // Handle clicking on premium chapter
-  const handlePremiumChapterClick = (chapter: Chapter) => {
-    setPremiumChapter(chapter);
-    setShowPremiumModal(true);
+  // Check if user has premium permission
+  const hasPremiumPermission = () => {
+    const user = getUserInfo();
+    if (!user) return false;
+
+    // Check permission first
+    if (user.permissions?.includes("chapter:read_premium")) return true;
+
+    // Check if user is uploader of this story
+    if (story?.uploader?.id === user.id) return true;
+
+    // Check if user is admin
+    if (user.roles?.includes("ADMIN")) return true;
+
+    return false;
+  };
+
+  // Handle clicking on chapter (premium or free)
+  const handleChapterClick = (chapter: Chapter) => {
+    const isPremiumChapter =
+      story.freeChapterLimit !== null &&
+      story.freeChapterLimit !== undefined &&
+      Number(chapter.chapterNumber) > story.freeChapterLimit;
+
+    if (isPremiumChapter && !hasPremiumPermission()) {
+      // Show premium modal if user doesn't have permission
+      setPremiumChapter(chapter);
+      setShowPremiumModal(true);
+    } else {
+      // Navigate directly to chapter
+      router.push(`/stories/${slug}/chapters/${chapter.id}`);
+    }
   };
 
   // Handle go to premium/subscription page
@@ -522,12 +550,7 @@ export default function StoryDetailPage() {
               </Link>
             </li>
             <li className="text-gray-400">»</li>
-            <li>
-              <Link href="/stories" className="hover:underline">
-                Thể loại
-              </Link>
-            </li>
-            <li className="text-gray-400">»</li>
+
             <li className="text-gray-700 dark:text-gray-300 font-medium truncate max-w-[200px]">{story.title}</li>
           </ol>
         </nav>
@@ -779,11 +802,15 @@ export default function StoryDetailPage() {
                 ) : (
                   <div className="divide-y divide-dashed divide-gray-200 dark:divide-gray-700">
                     {chapters.slice(0, 20).map((chapter) => {
-                      const isPremiumChapter = story.freeChapterLimit !== null && story.freeChapterLimit !== undefined && Number(chapter.chapterNumber) > story.freeChapterLimit;
-                      return isPremiumChapter ? (
+                      const isPremiumChapter =
+                        story.freeChapterLimit !== null &&
+                        story.freeChapterLimit !== undefined &&
+                        Number(chapter.chapterNumber) > story.freeChapterLimit;
+                      const canReadChapter = !isPremiumChapter || hasPremiumPermission();
+                      return (
                         <button
                           key={chapter.id}
-                          onClick={() => handlePremiumChapterClick(chapter)}
+                          onClick={() => handleChapterClick(chapter)}
                           className="grid grid-cols-12 gap-4 px-6 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition group w-full text-left"
                         >
                           <div className="col-span-5 flex items-center gap-2">
@@ -794,32 +821,13 @@ export default function StoryDetailPage() {
                               <span className="text-sm text-gray-500 dark:text-gray-400">{chapter.title}</span>
                             )}
                             {/* Premium Icon */}
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gradient-to-r from-yellow-400 to-orange-500 text-white">
-                              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                              </svg>
-                              PRE
-                            </span>
-                          </div>
-                          <div className="col-span-4 text-center text-sm text-gray-500 dark:text-gray-400 italic">
-                            {formatDate(chapter.updatedAt ?? chapter.createdAt)}
-                          </div>
-                          <div className="col-span-3 text-right text-sm text-gray-500 dark:text-gray-400">
-                            {formatViews(chapter.viewCount)}
-                          </div>
-                        </button>
-                      ) : (
-                        <Link
-                          key={chapter.id}
-                          href={`/stories/${slug}/chapters/${chapter.id}`}
-                          className="grid grid-cols-12 gap-4 px-6 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition group"
-                        >
-                          <div className="col-span-5">
-                            <span className="font-medium text-gray-900 dark:text-white group-hover:text-blue-500 transition">
-                              Chapter {chapter.chapterNumber}
-                            </span>
-                            {chapter.title && (
-                              <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">{chapter.title}</span>
+                            {isPremiumChapter && (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gradient-to-r from-yellow-400 to-orange-500 text-white">
+                                <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                </svg>
+                                {canReadChapter ? "PRE" : "🔒 PRE"}
+                              </span>
                             )}
                           </div>
                           <div className="col-span-4 text-center text-sm text-gray-500 dark:text-gray-400 italic">
@@ -828,7 +836,7 @@ export default function StoryDetailPage() {
                           <div className="col-span-3 text-right text-sm text-gray-500 dark:text-gray-400">
                             {formatViews(chapter.viewCount)}
                           </div>
-                        </Link>
+                        </button>
                       );
                     })}
                   </div>
@@ -933,22 +941,18 @@ export default function StoryDetailPage() {
       </div>
 
       {/* Premium Chapter Modal */}
-      <Modal
-        isOpen={showPremiumModal}
-        onClose={() => setShowPremiumModal(false)}
-        title="Chương Premium"
-      >
+      <Modal isOpen={showPremiumModal} onClose={() => setShowPremiumModal(false)} title="Chương Premium">
         <div className="text-center">
           <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 flex items-center justify-center">
             <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 20 20">
               <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
             </svg>
           </div>
-          
+
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
             {premiumChapter ? `Chapter ${premiumChapter.chapterNumber}` : ""} Yêu cầu Premium
           </h3>
-          
+
           <p className="text-gray-600 dark:text-gray-400 mb-6">
             Chương này chỉ dành cho thành viên Premium. Đăng ký ngay để đọc trọn bộ truyện không giới hạn!
           </p>
